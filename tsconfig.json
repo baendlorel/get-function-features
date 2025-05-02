@@ -5,7 +5,11 @@
     "target": "es6",
     "outDir": "dist",
     "esModuleInterop": true, // 可选，增强兼容性
-    "strict": true
+    "strict": true,
+    "baseUrl": ".", // 相对路径的起点
+    "paths": {
+      "@/*": ["src/*"] // 把 @ 映射到 src
+    }
   },
   "include": ["src/*.ts"],
   "exclude": ["tests"]

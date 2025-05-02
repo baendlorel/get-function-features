@@ -1,14 +1,14 @@
-import { err } from './logs';
-
 export const nativeCode = (functionName: string) =>
   `function ${functionName}() { [native code] }`;
 
-export const applyStrict = (strict: boolean, message: string) => {
-  if (strict) {
-    throw err(message);
-  } else {
-    console.warn('[GetFunctionType] ' + message);
-    return false;
+export const isNode = () => {
+  return typeof process?.versions?.node !== 'undefined';
+};
+
+export const isProxy = (o: typeof Proxy) => {
+  if (isNode()) {
+    const util = require('node:util') as typeof import('util');
+    return util.types.isProxy(o);
   }
 };
 

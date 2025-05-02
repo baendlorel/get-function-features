@@ -9,6 +9,7 @@ import { getOriginalToString, canBeNewed } from './core';
 import { FunctionType, GetFunctionType } from './types';
 import { analyse } from './analyzer';
 
+// TODO 将返回值改为一个对象，对象里包含了函数特征isXXX
 const getFunctionType = ((fn: any): FunctionType => {
   if (typeof fn !== 'function') {
     return FunctionType.NotFunction;
@@ -57,7 +58,10 @@ const getFunctionType = ((fn: any): FunctionType => {
     return FunctionType.AsyncFunction;
   }
 
-  return FunctionType.MemberFunction;
+  if (isMember) {
+    return FunctionType.MemberFunction;
+  }
+  return FunctionType.Unknown;
 }) as GetFunctionType;
 
 getFunctionType.PossibleResults = Object.keys(FunctionType).filter((k) =>
