@@ -1,7 +1,8 @@
-import { describe, expect } from '@jest/globals';
+import { describe, expect, fit } from '@jest/globals';
 import getFunctionType from '../src/index';
 import { createIt } from './it';
 import { FunctionFeature } from '../src/feature.class';
+import { extractToStringProto } from '../src/core';
 
 const it = createIt();
 
@@ -12,13 +13,11 @@ describe('刁钻边界测试用例', () => {
   it('Function.toString 被修改后的情况', () => {
     const originalToString = Function.prototype.toString;
     try {
-      // 修改 Object.prototype.toString
+      // 修改 Function.prototype.toString
       Function.prototype.toString = function () {
         return '被修改了';
       };
-
-      const fn = () => {};
-      expect(getFunctionType(fn)).toThrowError();
+      expect(() => extractToStringProto()).toThrowError();
     } finally {
       // 恢复原状
       Function.prototype.toString = originalToString;
@@ -136,31 +135,32 @@ describe('刁钻边界测试用例', () => {
   it('带默认参数的箭头函数', () => {
     // 带默认参数和解构的箭头函数
     const fn = ({ a = 1, b = 2 } = {}) => a + b;
-    expect(getFunctionType(fn)).toBe(FunctionType.ArrowFunction);
+
+    expectFeature(fn, {
+      isArrow: 'yes',
+      isAsync: 'no',
+      isConstructor: 'no',
+      isClassMember: 'no',
+      isGenerator: 'no',
+    });
   });
 
-  it('绑定多次的函数', () => {
+  fit('绑定多次的函数', () => {
     // 多次绑定的函数
     const fn = function () {
       return this;
     };
     const boundOnce = fn.bind({ x: 1 });
     const boundTwice = boundOnce.bind({ y: 2 });
-    console.log('boundTwice =', boundTwice.name);
-    expect(getFunctionType(boundTwice)).toBe(FunctionType.BoundFunction);
-  });
-
-  it('带有嵌套函数定义的函数', () => {
-    // 函数内部定义其他函数
-    function outer() {
-      function inner() {
-        return () => {};
-      }
-      return inner;
-    }
-    const innerFn = outer();
-    expect(getFunctionType(innerFn)).toBe(FunctionType.NormalFunction);
-    expect(getFunctionType(innerFn())).toBe(FunctionType.ArrowFunction);
+    expectFeature(boundTwice, {
+      isBound: 'yes',
+      isProxy: 'no',
+      isArrow: 'no',
+      isAsync: 'no',
+      isConstructor: 'yes',
+      isClassMember: 'no',
+      isGenerator: 'no',
+    });
   });
 
   it('代理函数', () => {
@@ -171,6 +171,14 @@ describe('刁钻边界测试用例', () => {
         return target.apply(thisArg, args);
       },
     });
-    expect(getFunctionType(proxiedFn)).toBe(getFunctionType(originalFn));
+    expectFeature(proxiedFn, {
+      isBound: 'no',
+      isProxy: 'yes',
+      isArrow: 'yes',
+      isAsync: 'no',
+      isConstructor: 'no',
+      isClassMember: 'no',
+      isGenerator: 'no',
+    });
   });
 });

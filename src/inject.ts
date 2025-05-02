@@ -1,17 +1,20 @@
 // 通过注入Proxy和bind来实现标记判定，这样的判定是100%准确的
 let injectionFlag = false;
 
-const proxySet = new WeakSet<Function>();
-const boundSet = new WeakSet<Function>();
+const proxiedFns = new WeakSet<Function>();
+const boundFns = new WeakSet<Function>();
 const sourceMap = new WeakMap<Function, Function>();
 
-const recordSource = (target: Function, newFunction: Function) => {
+const setSource = (target: Function, newFn: Function) => {
+  // 如果target也有源头，那么设置为target的源头
   if (sourceMap.has(target)) {
     const source = sourceMap.get(target) as Function;
-    sourceMap.set(newFunction, source);
+    sourceMap.set(newFn, source);
     return;
   }
-  sourceMap.set(newFunction, target);
+
+  // target就是源头，那么设置新函数映射到target
+  sourceMap.set(newFn, target);
 };
 
 const inject = () => {
@@ -23,8 +26,8 @@ const inject = () => {
   ) {
     const p = new oldProxy(target, handler);
     if (typeof target === 'function') {
-      recordSource(target, p as Function);
-      proxySet.add(p as Function);
+      setSource(target, p as Function);
+      proxiedFns.add(p as Function);
     }
     console.log('new proxy made');
     return p;
@@ -34,30 +37,54 @@ const inject = () => {
     // 创建原版
     const revocable = oldProxy.revocable(target, handler);
     if (typeof target === 'function') {
-      recordSource(target, revocable.proxy as Function);
-      proxySet.add(revocable.proxy as Function);
+      setSource(target, revocable.proxy as Function);
+      proxiedFns.add(revocable.proxy as Function);
     }
     console.log('new proxy made');
     return revocable;
   };
+  // 改写
   Proxy = newProxy;
 
   const oldBind = Function.prototype.bind;
+  // 改写
   Function.prototype.bind = function (this, thisArg: any, ...args: any[]) {
-    const bound = oldBind.call(this, thisArg, ...args);
-    recordSource(this, bound as Function);
-    boundSet.add(bound as Function);
-    return bound;
+    console.log('Bind called on:', this.name || '(anonymous function)');
+    const newFn = oldBind.call(this, thisArg, ...args);
+    setSource(this, newFn);
+    boundFns.add(newFn);
+    console.log(
+      'New bound function created:',
+      newFn.name,
+      'Added to set:',
+      boundFns.has(newFn)
+    );
+
+    return newFn;
   };
 
   injectionFlag = true;
   console.log(`[GetFunctionType] Proxy, Bind Injected`);
+
+  return {
+    createProxyDirectly: function <T extends object>(
+      target: T,
+      handler: ProxyHandler<T>
+    ) {
+      return new oldProxy(target, handler);
+    },
+    bindDirectly: function (this: any, thisArg: any, ...args: any[]) {
+      return oldBind.call(this, thisArg, ...args);
+    },
+  };
 };
-inject();
+export const { createProxyDirectly, bindDirectly } = inject();
 
-export const hasProxyChain = (o: any) => proxySet.has(o);
+export const isInProxySet = (o: any) => proxiedFns.has(o);
 
-export const hasBindChain = (o: any) => boundSet.has(o);
+export const isInBoundSet = (o: any) => (
+  console.log(o, boundFns.has(o)), boundFns.has(o)
+);
 
 export const getSourceFunction = (o: Function) => sourceMap.get(o) ?? o;
 

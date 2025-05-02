@@ -6,5 +6,5 @@ type TestFn = Parameters<typeof it>[1];
 export const createIt = () => {
   let i = 1;
   return (testName: TestNameLike, fn: TestFn, timeout?: number) =>
-    it(`${i++}. ${testName}`, fn, timeout);
+    it(`${String(i++).padStart(3, ' ')}. ${testName}`, fn, timeout);
 };

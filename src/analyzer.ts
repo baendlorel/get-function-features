@@ -1,6 +1,6 @@
 import { err, warnLog } from './logs';
-import { isNode, justify, protoToString } from './core';
-import { hasBindChain, hasProxyChain, isInjected } from './inject';
+import { isNode, justify, toStringProto } from './core';
+import { createProxyDirectly, isInBoundSet, isInProxySet, isInjected } from './inject';
 import { CheckResult } from './feature.class';
 
 export const scanForNext = (str: string, char: string) => {
@@ -27,7 +27,7 @@ export const scanForNext = (str: string, char: string) => {
  * @returns
  */
 export const analyse = (fn: Function) => {
-  const fnStr = protoToString(fn);
+  const fnStr = toStringProto(fn);
   let leftParenthesesIndex = -1;
   let rightParenthesesIndex = -1;
   let bracketLevel = 0;
@@ -156,7 +156,7 @@ export const analyse = (fn: Function) => {
 
 export const isBound = (fn: Function) => {
   if (isInjected()) {
-    return hasBindChain(fn);
+    return isInBoundSet(fn);
   }
   return fn.name.startsWith('bound ');
 };
@@ -168,7 +168,7 @@ export const isProxy = (o: any) => {
   }
 
   if (isInjected()) {
-    return hasProxyChain(o);
+    return isInProxySet(o);
   }
 
   warnLog(`Cannot tell if ${o} is a proxy or not, return false.`);
@@ -186,7 +186,7 @@ export const isProxy = (o: any) => {
  */
 export const isConstructor = (fn: any) => {
   try {
-    const fp = new Proxy(fn, {
+    const fp = createProxyDirectly(fn, {
       construct(target, args) {
         return {};
       },
@@ -218,7 +218,7 @@ export const isAsync = (fn: Function) => {
     return util.types.isAsyncFunction(fn);
   }
 
-  const fnStr = protoToString(fn);
+  const fnStr = toStringProto(fn);
   return (
     fnStr.startsWith('async ') ||
     fn.constructor.name === 'AsyncFunction' ||
@@ -232,7 +232,7 @@ export const isGenerator = (fn: Function) => {
     return util.types.isGeneratorFunction(fn);
   }
 
-  const fnStr = protoToString(fn)
+  const fnStr = toStringProto(fn)
     .replace(/\b(async|function)+\b/g, '')
     .trim();
   return (

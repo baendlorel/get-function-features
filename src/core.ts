@@ -11,7 +11,7 @@ export const justify = (str: string) => {
   return str.trim().replace(/\s+/g, ' ');
 };
 
-export const protoToString = (() => {
+export const extractToStringProto = () => {
   const _toString = Function.prototype.toString;
 
   if (typeof _toString !== 'function') {
@@ -52,4 +52,6 @@ export const protoToString = (() => {
     }
     return s;
   };
-})();
+};
+
+export const toStringProto = extractToStringProto();
