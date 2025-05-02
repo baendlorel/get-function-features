@@ -1,6 +1,7 @@
-import { CheckResult } from './types';
-import { err } from './logs';
-import { isNode, justify, nativeCode, protoToString } from './core';
+import { err, warnLog } from './logs';
+import { isNode, justify, protoToString } from './core';
+import { hasBindChain, hasProxyChain, isInjected } from './inject';
+import { CheckResult } from './feature.class';
 
 export const scanForNext = (str: string, char: string) => {
   for (let i = 0; i < str.length; i++) {
@@ -144,39 +145,36 @@ export const analyse = (fn: Function) => {
     params,
     body,
     isArrow: body.startsWith('=>') || noParenthesesButArrow,
-    isAsync: fnStr.startsWith('async'),
+    isAsync: fnStr.startsWith('async') || fn.constructor.name === 'AsyncFunction',
     isClassMember: !(
       body.startsWith('=>') ||
       name.startsWith('function') ||
-      name.startsWith('async function')
+      name.startsWith('async function* ') ||
+      name.startsWith('async function ')
     ),
   };
 };
 
-export const isBound = (fn: Function): CheckResult => {
-  return fn.name.startsWith('bound ') ? 'yes' : 'no';
+export const isBound = (fn: Function) => {
+  if (isInjected()) {
+    return hasBindChain(fn);
+  }
+  return fn.name.startsWith('bound ');
 };
 
-export const isProxy = (o: typeof Proxy<Function>): CheckResult => {
+export const isProxy = (o: any) => {
   if (isNode()) {
     const util = require('node:util') as typeof import('util');
-    return util.types.isProxy(o) ? 'yes' : 'no';
+    return util.types.isProxy(o);
   }
 
-  return 'unknown';
+  if (isInjected()) {
+    return hasProxyChain(o);
+  }
 
-  // ^ 以下这段说明不了任何问题
-  // const str = protoToString(o);
-  // // Proxy后的函数和bind一样会变成nativecode，且不含函数名
-  // if (str !== nativeCode()) {
-  //   return 'no';
-  // }
-  // // 去掉bound部分
-  // const originName = o.name.replace(/^bound\s/, '');
-  // if (originName !== '') {
-  //   return 'maybe';
-  // }
-  // return 'unknown';
+  warnLog(`Cannot tell if ${o} is a proxy or not, return false.`);
+  // 一般不会到这里
+  return false;
 };
 
 /**
@@ -187,7 +185,7 @@ export const isProxy = (o: typeof Proxy<Function>): CheckResult => {
  * @param fn
  * @returns
  */
-export const isConstructor = (fn: any): CheckResult => {
+export const isConstructor = (fn: any) => {
   try {
     const fp = new Proxy(fn, {
       construct(target, args) {
@@ -195,14 +193,14 @@ export const isConstructor = (fn: any): CheckResult => {
       },
     });
     new fp();
-    return 'yes';
+    return true;
   } catch (error) {
     if (
       error instanceof TypeError &&
       error.message &&
       error.message.includes('is not a constructor')
     ) {
-      return 'no';
+      return false;
     }
     console.error(
       '[GetFunctionType]',
@@ -211,40 +209,36 @@ export const isConstructor = (fn: any): CheckResult => {
       fn,
       error
     );
-    return 'unknown';
+    throw error;
   }
 };
 
-export const isAsync = (fn: Function): CheckResult => {
+export const isAsync = (fn: Function) => {
+  if (isNode()) {
+    const util = require('node:util') as typeof import('util');
+    return util.types.isAsyncFunction(fn);
+  }
+
   const fnStr = protoToString(fn);
-
-  // 如果被代理或bind，那么async字样将会丢失
-  if (fnStr.startsWith('async ')) {
-    return 'yes';
-  }
-
-  // 如果此属性未被篡改，那么是可以直接判断的
-  if ((fn as any)[Symbol.toStringTag] === 'AsyncFunction') {
-    return 'yes';
-  }
-
-  // 如果篡改且代理/bind，依然有可能是async函数，但已经无法判断
-  return 'unknown';
+  return (
+    fnStr.startsWith('async ') ||
+    fn.constructor.name === 'AsyncFunction' ||
+    (fn as any)[Symbol.toStringTag] === 'AsyncFunction'
+  );
 };
 
-/**
- * proxy or bind may cause confuse
- * @param isProxyOrBound
- * @param someResult
- * @returns
- */
-export const pbconfuse = (isProxyOrBound: boolean, someResult: CheckResult) => {
-  // 如果是proxy或bind，那么结果可能是async函数
-  if (!isProxyOrBound) {
-    return someResult;
+export const isGenerator = (fn: Function) => {
+  if (isNode()) {
+    const util = require('node:util') as typeof import('util');
+    return util.types.isGeneratorFunction(fn) ? 'yes' : 'no';
   }
-  if (someResult !== 'yes') {
-    return 'maybe';
-  }
-  return someResult;
+
+  const fnStr = protoToString(fn)
+    .replace(/\b(async|function)+\b/g, '')
+    .trim();
+  return (
+    fn.constructor.name === 'GeneratorFunction' ||
+    (fn as any)[Symbol.toStringTag] === 'GeneratorFunction' ||
+    fnStr.startsWith('*')
+  );
 };
