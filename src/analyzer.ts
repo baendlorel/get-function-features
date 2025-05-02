@@ -145,7 +145,6 @@ export const analyse = (fn: Function) => {
     params,
     body,
     isArrow: body.startsWith('=>') || noParenthesesButArrow,
-    isAsync: fnStr.startsWith('async') || fn.constructor.name === 'AsyncFunction',
     isClassMember: !(
       body.startsWith('=>') ||
       name.startsWith('function') ||
@@ -230,7 +229,7 @@ export const isAsync = (fn: Function) => {
 export const isGenerator = (fn: Function) => {
   if (isNode()) {
     const util = require('node:util') as typeof import('util');
-    return util.types.isGeneratorFunction(fn) ? 'yes' : 'no';
+    return util.types.isGeneratorFunction(fn);
   }
 
   const fnStr = protoToString(fn)

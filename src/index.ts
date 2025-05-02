@@ -4,8 +4,8 @@
  * @license MIT
  */
 import './inject';
-import { Features } from './feature.class';
+import { FunctionFeature } from './feature.class';
 
-const getFunctionFeatures = (fn: any) => new Features(fn);
+const getFunctionFeatures = (fn: any) => new FunctionFeature(fn);
 
 export = getFunctionFeatures;

@@ -1,9 +1,30 @@
-import { strict as assert } from 'assert';
+import { describe, expect } from '@jest/globals';
 import getFunctionType from '../src/index';
-import { FunctionType } from '../src/types';
-import { describe, expect, it } from '@jest/globals';
+import { createIt } from './it';
+import { FunctionFeature } from '../src/feature.class';
+
+const it = createIt();
 
 describe('刁钻边界测试用例', () => {
+  const expectFeature = (fn: Function, expected: Partial<FunctionFeature>) =>
+    expect(getFunctionType(fn)).toEqual(expect.objectContaining(expected));
+
+  it('Function.toString 被修改后的情况', () => {
+    const originalToString = Function.prototype.toString;
+    try {
+      // 修改 Object.prototype.toString
+      Function.prototype.toString = function () {
+        return '被修改了';
+      };
+
+      const fn = () => {};
+      expect(getFunctionType(fn)).toThrowError();
+    } finally {
+      // 恢复原状
+      Function.prototype.toString = originalToString;
+    }
+  });
+
   it('包含注释和引号的箭头函数', () => {
     // 包含所有三种引号和注释的箭头函数
     const fn = eval(`() => {
@@ -15,7 +36,15 @@ describe('刁钻边界测试用例', () => {
       return { a, b, c };
    
     }`);
-    expect(getFunctionType(fn)).toBe(FunctionType.ArrowFunction);
+    expectFeature(fn, {
+      notFunction: false,
+      isArrow: 'yes',
+      isAsync: 'no',
+      isClassMember: 'no',
+      isConstructor: 'no',
+      isProxy: 'no',
+      isBound: 'no',
+    });
   });
 
   it('混合了正则表达式的函数', () => {
@@ -23,41 +52,41 @@ describe('刁钻边界测试用例', () => {
     const fn = function (regex = /function\s*\(\)\s*\{/) {
       return regex.test('function() {');
     };
-    expect(getFunctionType(fn)).toBe(FunctionType.NormalFunction);
+
+    expectFeature(fn, {
+      isArrow: 'no',
+      isAsync: 'no',
+      isClassMember: 'no',
+      isConstructor: 'yes',
+      isProxy: 'no',
+      isBound: 'no',
+    });
   });
 
   it('嵌套多层括号的箭头函数', () => {
     // 箭头函数参数包含多层括号的解构
     const fn = eval(`([{a: {b: {c: {d}}}}]) => ({...d})`);
-    expect(getFunctionType(fn)).toBe(FunctionType.ArrowFunction);
-  });
-
-  it('Function.toString 被修改后的情况', () => {
-    const originalToString = Function.prototype.toString;
-    try {
-      // 修改 Object.prototype.toString
-      Object.prototype.toString = function () {
-        return '被修改了';
-      };
-
-      const fn = () => {};
-      expect(getFunctionType(fn)).toBe(FunctionType.Unknown);
-    } finally {
-      // 恢复原状
-      Object.prototype.toString = originalToString;
-    }
+    expectFeature(fn, {
+      isArrow: 'yes',
+    });
   });
 
   it('有名箭头函数的赋值表达式', () => {
     // 带名字的箭头函数（虽然箭头函数自身无法命名，但赋值给变量算是一种"命名"）
-    const namedArrow = () => {};
-    expect(getFunctionType(namedArrow)).toBe(FunctionType.ArrowFunction);
+    const fn = () => {};
+    expectFeature(fn, {
+      isArrow: 'yes',
+      isConstructor: 'no',
+    });
   });
 
   it('模拟构造函数调用 new Function()', () => {
     // 使用 new Function 创建的函数
-    const dynamicFn = new Function('a', 'b', 'return a + b');
-    expect(getFunctionType(dynamicFn)).toBe(FunctionType.NormalFunction);
+    const fn = new Function('a', 'b', 'return a + b');
+    expectFeature(fn, {
+      isArrow: 'no',
+      isConstructor: 'yes',
+    });
   });
 
   it('具有复杂方括号符号的函数', () => {
@@ -67,7 +96,11 @@ describe('刁钻边界测试用例', () => {
         return a + b;
       },
     };
-    expect(getFunctionType(obj['complex[name]'])).toBe(FunctionType.MemberFunction);
+    expectFeature(obj['complex[name]'], {
+      isArrow: 'no',
+      isConstructor: 'no',
+      isClassMember: 'yes',
+    });
   });
 
   it('对象方法简写语法', () => {
@@ -77,16 +110,27 @@ describe('刁钻边界测试用例', () => {
         return this;
       },
     };
-    expect(getFunctionType(obj.method)).toBe(FunctionType.MemberFunction);
+    expectFeature(obj.method, {
+      isArrow: 'no',
+      isConstructor: 'no',
+      isClassMember: 'yes',
+    });
   });
 
   it('异步生成器函数', () => {
     // 异步生成器函数
-    async function* asyncGenerator() {
+    async function* fn() {
       yield 1;
       yield 2;
     }
-    expect(getFunctionType(asyncGenerator)).toBe(FunctionType.AsyncFunction);
+
+    expectFeature(fn, {
+      isArrow: 'no',
+      isAsync: 'yes',
+      isConstructor: 'no',
+      isClassMember: 'no',
+      isGenerator: 'yes',
+    });
   });
 
   it('带默认参数的箭头函数', () => {
