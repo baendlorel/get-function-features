@@ -1,6 +1,6 @@
-# js-is-arrow-function
+# Get-function-type
 
-A precise way to judge if a function is an arrow function.
+JS/TS functions are divided into arrow functions, normal functions, member functions, async functions, and bound functions. This package aims to know which type it is.
 
 Can be used both on javascript and typescript projects.
 
@@ -19,31 +19,15 @@ We use Proxy to prevent the function to be really executed. In order not to caus
 ### import
 
 ```typescript
-import isArrowFunction from 'js-is-arrow-function';
+import getFunctionType from 'get-function-type';
 // or
-const isArrowFunction = require('js-is-arrow-function');
+const getFunctionType = require('get-function-type');
 ```
 
 ### Use
 
-normal mode: If the given argument is not a function, return false.
-
 ```typescript
-isArrowFunction(function () {}) === false;
-isArrowFunction(null) === false;
-isArrowFunction((a, b) => a * b) === true;
-isArrowFunction(() => 42) === true;
-isArrowFunction((x) => x * x) === true;
-isArrowFunction((x) => () => x * x) === true;
-```
 
-strict mode: If the given argument is not a function, throw an error.
-
-```typescript
-isArrowFunction.strict(function () {}) === false;
-isArrowFunction.strict((a, b) => a * b) === true;
-isArrowFunction.strict(null); // throw TypeError
-isArrowFunction.strict(2); // throw TypeError
 ```
 
 ## LICENSE

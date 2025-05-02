@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "declaration": true,
+    "module": "commonjs", // 必须为 commonjs
+    "target": "es6",
+    "outDir": "dist",
+    "esModuleInterop": true, // 可选，增强兼容性
+    "strict": true
+  },
+  "include": ["src/*.ts"],
+  "exclude": ["tests"]
+}
