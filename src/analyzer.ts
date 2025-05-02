@@ -1,5 +1,6 @@
-import { FunctionType } from './types';
+import { CheckResult } from './types';
 import { err } from './logs';
+import { isNode, justify, nativeCode, protoToString } from './core';
 
 export const scanForNext = (str: string, char: string) => {
   for (let i = 0; i < str.length; i++) {
@@ -15,10 +16,6 @@ export const scanForNext = (str: string, char: string) => {
   return -1;
 };
 
-const justify = (str: string) => {
-  return str.trim().replace(/\s+/g, ' ');
-};
-
 /**
  * 如果toString一个函数，默认值用到了单、双、反这三种引号的组合。那么会出现：\
  * 1、使用了单引号，那么结果会用双引号包裹 \
@@ -28,7 +25,8 @@ const justify = (str: string) => {
  * @param fnStr
  * @returns
  */
-export const analyse = (fnStr: string) => {
+export const analyse = (fn: Function) => {
+  const fnStr = protoToString(fn);
   let leftParenthesesIndex = -1;
   let rightParenthesesIndex = -1;
   let bracketLevel = 0;
@@ -120,13 +118,10 @@ export const analyse = (fnStr: string) => {
   }
 
   // 现在fn确认是函数了，但没有括号，只有单参数箭头函数满足这个情况
+  let noParenthesesButArrow = false;
   if (leftParenthesesIndex === -1 || rightParenthesesIndex === -1) {
     if (fnStr.includes('=>')) {
-      if (fnStr.trim().startsWith('async')) {
-        return FunctionType.AsyncArrowFunction;
-      } else {
-        return FunctionType.ArrowFunction;
-      }
+      noParenthesesButArrow = true;
     } else {
       throw err(`There is no bracket in the function string, cannot parse the function.`);
     }
@@ -148,8 +143,105 @@ export const analyse = (fnStr: string) => {
     name,
     params,
     body,
-    isArrow: body.startsWith('=>'),
-    isAsync: name.startsWith('async'),
-    isMember: !body.startsWith('=>') && !name.startsWith('function'),
+    isArrow: body.startsWith('=>') || noParenthesesButArrow,
+    isAsync: fnStr.startsWith('async'),
+    isClassMember: !(
+      body.startsWith('=>') ||
+      name.startsWith('function') ||
+      name.startsWith('async function')
+    ),
   };
+};
+
+export const isBound = (fn: Function): CheckResult => {
+  return fn.name.startsWith('bound ') ? 'yes' : 'no';
+};
+
+export const isProxy = (o: typeof Proxy<Function>): CheckResult => {
+  if (isNode()) {
+    const util = require('node:util') as typeof import('util');
+    return util.types.isProxy(o) ? 'yes' : 'no';
+  }
+
+  const str = protoToString(o);
+  // Proxy后的函数和bind一样会变成nativecode，且不含函数名
+  if (str !== nativeCode()) {
+    return 'no';
+  }
+  // 去掉bound部分
+  const originName = o.name.replace(/^bound\s/, '');
+  if (originName !== '') {
+    return 'maybe';
+  }
+  return 'unknown';
+};
+
+/**
+ * 经过研究，使用new操作符是最为确定的判断方法，箭头函数无法new \
+ * 此处用proxy拦截构造函数，防止普通函数真的作为构造函数运行 \
+ * After some research, using new operator to distinct arrow functions from normal functions is the best approach. \
+ * We use proxy here to avoid truely running the constructor normal function(while arrow function cannot be newed)
+ * @param fn
+ * @returns
+ */
+export const isConstructor = (fn: any): CheckResult => {
+  try {
+    const fp = new Proxy(fn, {
+      construct(target, args) {
+        return {};
+      },
+    });
+    new fp();
+    return 'yes';
+  } catch (error) {
+    if (
+      error instanceof TypeError &&
+      error.message &&
+      error.message.includes('is not a constructor')
+    ) {
+      return 'no';
+    }
+    console.error(
+      '[GetFunctionType]',
+      '发生了未知错误。An unknown error occurred.',
+      'fn:',
+      fn,
+      error
+    );
+    return 'unknown';
+  }
+};
+
+export const isAsync = (fn: Function): CheckResult => {
+  const fnStr = protoToString(fn);
+
+  // 如果被代理或bind，那么async字样将会丢失
+  if (fnStr.startsWith('async ')) {
+    return 'yes';
+  }
+
+  // 如果此属性未被篡改，那么是可以直接判断的
+  if ((fn as any)[Symbol.toStringTag] === 'AsyncFunction') {
+    return 'yes';
+  }
+
+  // 如果篡改且代理/bind，依然有可能是async函数，但已经无法判断
+  return 'unknown';
+};
+
+/**
+ * proxy or bind may cause confuse
+ * @param isProxyOrBound
+ * @param someResult
+ * @returns
+ */
+export const pbconfuse = (isProxyOrBound: boolean, someResult: CheckResult) => {
+  // 如果是proxy或bind，那么结果可能是async函数
+  if (!isProxyOrBound) {
+    return someResult;
+  }
+  if (someResult !== 'yes') {
+    return 'maybe';
+  }
+  return someResult;
 };

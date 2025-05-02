@@ -1,20 +1,20 @@
 {
-	"name": "get-function-type",
+	"name": "get-function-features",
 	"version": "1.0.0",
 	"author": {
 		"name": "KasukabeTsumugi",
 		"email": "futami16237@gmail.com"
 	},
-	"description": "JS/TS functions are divided into arrow functions, normal functions, member functions, async functions, and bound functions. This package aims to know which type it is.",
+	"description": "JS/TS functions are divided into arrow functions, normal functions, member functions, async functions, and bound functions. This package aims to analyse these features.",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"files": [
 		"dist"
 	],
-	"homepage": "https://github.com/baendlorel/get-function-type#readme",
+	"homepage": "https://github.com/baendlorel/get-function-features#readme",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/baendlorel/get-function-type"
+		"url": "https://github.com/baendlorel/get-function-features"
 	},
 	"keywords": [
 		"arrow function",
@@ -24,7 +24,8 @@
 	],
 	"scripts": {
 		"test": "clear & jest",
-		"build": "rm -rf dist && tsc && uglifyjs ./dist/index.js -c -m -o ./dist/get-function-type.min.js"
+		"build": "rm -rf dist && tsc && uglifyjs ./dist/index.js -c -m -o ./dist/get-function-features.min.js",
+		"raw": "node tests/raw.js"
 	},
 	"devDependencies": {
 		"@babel/cli": "^7.26.4",
