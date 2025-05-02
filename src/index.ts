@@ -3,11 +3,10 @@
  * @author Kasukabe Tsumugi <futami16237@gmail.com>
  * @license MIT
  */
-
+import './inject';
 import { analyse, isAsync, isConstructor, isProxy, isBound, pbconfuse } from './analyzer';
 import { createFeatureResult, Features } from './types';
 
-// TODO 将返回值改为一个对象，对象里包含了函数特征isXXX
 const getFunctionFeatures = (fn: any): Features => {
   const result = createFeatureResult();
   if (typeof fn !== 'function') {

@@ -163,17 +163,20 @@ export const isProxy = (o: typeof Proxy<Function>): CheckResult => {
     return util.types.isProxy(o) ? 'yes' : 'no';
   }
 
-  const str = protoToString(o);
-  // Proxy后的函数和bind一样会变成nativecode，且不含函数名
-  if (str !== nativeCode()) {
-    return 'no';
-  }
-  // 去掉bound部分
-  const originName = o.name.replace(/^bound\s/, '');
-  if (originName !== '') {
-    return 'maybe';
-  }
   return 'unknown';
+
+  // ^ 以下这段说明不了任何问题
+  // const str = protoToString(o);
+  // // Proxy后的函数和bind一样会变成nativecode，且不含函数名
+  // if (str !== nativeCode()) {
+  //   return 'no';
+  // }
+  // // 去掉bound部分
+  // const originName = o.name.replace(/^bound\s/, '');
+  // if (originName !== '') {
+  //   return 'maybe';
+  // }
+  // return 'unknown';
 };
 
 /**

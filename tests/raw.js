@@ -19,3 +19,10 @@ console.log('------------------');
   console.log('name:', '[' + a[''].name + ']'); // 'string'
   console.log('toString:', a[''].toString()); // 'string'
 }
+console.log('------------------');
+{
+  const originProxy = Proxy;
+  Proxy = null;
+  console.log('Proxy:', Proxy); // null
+  console.log('originProxy:', originProxy); // null
+}
