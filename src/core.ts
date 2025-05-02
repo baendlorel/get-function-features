@@ -1,10 +1,13 @@
-import { err } from './error';
+import { err } from './logs';
+
+export const nativeCode = (functionName: string) =>
+  `function ${functionName}() { [native code] }`;
 
 export const applyStrict = (strict: boolean, message: string) => {
   if (strict) {
     throw err(message);
   } else {
-    console.warn('[isArrowFunction] ' + message);
+    console.warn('[GetFunctionType] ' + message);
     return false;
   }
 };
@@ -15,31 +18,31 @@ export const getOriginalToString = (): (() => string) | string => {
     return toString;
   }
 
-  const origin = Function.prototype.toString;
+  const originalToString = Function.prototype.toString;
 
-  if (typeof origin !== 'function') {
+  if (typeof originalToString !== 'function') {
     return 'Function.prototype.toString is not a function. It is definitly been tampered!';
   }
 
-  if (typeof origin.call !== 'function') {
+  if (typeof originalToString.call !== 'function') {
     return 'Function.prototype.toString.call is not a function. It is definitly been tampered!';
   }
 
-  const toStringStr = origin.call(origin);
+  const toStringStr = originalToString.call(originalToString);
 
   if (typeof toStringStr !== 'string') {
     return 'Function.prototype.toString.toString() is not a string. It is definitly been tampered!';
   }
 
   if (
-    toStringStr !== `function toString() { [native code] }` &&
+    toStringStr !== nativeCode('toString') &&
     toStringStr.indexOf('native code') === -1
   ) {
     return 'Function.prototype.toString.toString() is not native code. It is definitly been tampered!';
   }
 
-  toString = origin;
-  return origin;
+  toString = originalToString;
+  return originalToString;
 };
 
 /**
@@ -68,7 +71,7 @@ export const canBeNewed = (fn: any) => {
       return false;
     }
     console.error(
-      '[isArrowFunction]',
+      '[GetFunctionType]',
       '发生了未知错误。An unknown error occurred.',
       'fn:',
       fn
