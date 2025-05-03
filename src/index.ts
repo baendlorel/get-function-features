@@ -40,15 +40,16 @@ const getFunctionFeatures = (fn: any) => {
   // # 逻辑闭环校验
 
   const logic = new FeatureLogic(features);
-  logic.nand('isArrow', 'isConstructor');
-  logic.nand('isArrow', 'isMemberMethod');
-  logic.nand('isArrow', 'isClass');
-  logic.nand('isAsync', 'isConstructor');
-  logic.nand('isAsync', 'isClass');
-  logic.nand('isMemberMethod', 'isConstructor');
-  logic.nand('isMemberMethod', 'isClass');
-  logic.nand('isGenerator', 'isConstructor');
-  logic.nand('isGenerator', 'isClass');
+  logic.nand('isArrow', 'isConstructor'); // 箭头函数不能new
+  logic.nand('isArrow', 'isMemberMethod'); // 箭头函数不叫成员方法，而是纯粹的变量
+  logic.nand('isArrow', 'isClass'); // 箭头函数肯定不是class
+  logic.nand('isAsync', 'isConstructor'); // async函数不能new
+  logic.nand('isAsync', 'isClass'); // async函数肯定不是类
+  logic.nand('isMemberMethod', 'isConstructor'); // 成员方法不能new，会提示不是构造函数
+  logic.nand('isMemberMethod', 'isClass'); // 自然也不是class
+  logic.nand('isGenerator', 'isConstructor'); // 生成器函数不能new
+  logic.nand('isGenerator', 'isClass'); // 生成器函数肯定不是class
+  logic.nand('isProxy', 'isBound'); // fn当前的状态至多只可能isProxy和isBound二选一，但was版本可以同时存在
 
   logic.implies({ isClass: true }, { isConstructor: true });
 

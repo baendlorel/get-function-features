@@ -1,13 +1,13 @@
 const createTracker = () => {
   // 通过注入Proxy和bind来实现标记判定，这样的判定是100%准确的
 
-  const PROXIED = 0b01 as const;
-  const BOUND = 0b10 as const;
+  const IS_PROXIED = 0b0001 as const;
+  const IS_BOUND = 0b0010 as const;
+  const WAS_PROXIED = 0b0100 as const;
+  const WAS_BOUND = 0b1000 as const;
 
   const _source = new WeakMap<Function, Function>();
   const _pbState = new WeakMap<Function, number>();
-  const _bound = new WeakSet<Function>();
-  const _proxied = new WeakSet<Function>();
 
   const _setSource = (target: Function, newFn: Function) => {
     // 如果target也有源头，那么设置为target的源头
@@ -24,10 +24,16 @@ const createTracker = () => {
   const _setPBState = (
     target: Function,
     newFn: Function,
-    state: typeof PROXIED | typeof BOUND
+    state: typeof IS_PROXIED | typeof IS_BOUND
   ) => {
     if (_pbState.has(target)) {
-      const oldState = _pbState.get(target) as number;
+      let oldState = _pbState.get(target) as number;
+      if (oldState & IS_PROXIED) {
+        oldState = (oldState & ~IS_PROXIED) | WAS_PROXIED;
+      }
+      if (oldState & IS_BOUND) {
+        oldState = (oldState & ~IS_BOUND) | WAS_BOUND;
+      }
       _pbState.set(newFn, oldState | state);
       return;
     }
@@ -43,10 +49,7 @@ const createTracker = () => {
     const p = new _Proxy(target, handler) as any;
     if (typeof target === 'function') {
       _setSource(target, p);
-      _setPBState(target, p, PROXIED);
-      _proxied.add(p);
-      console.log('target', target, _pbState.get(target));
-      console.log('p', p, _pbState.get(p));
+      _setPBState(target, p, IS_PROXIED);
     }
     return p;
   } as any;
@@ -57,8 +60,7 @@ const createTracker = () => {
     const p = revocable.proxy as Function;
     if (typeof target === 'function') {
       _setSource(target, p);
-      _setPBState(target, p, PROXIED);
-      _proxied.add(p);
+      _setPBState(target, p, IS_PROXIED);
     }
     return revocable;
   };
@@ -70,16 +72,15 @@ const createTracker = () => {
   Function.prototype.bind = function (this, thisArg: any, ...args: any[]) {
     const newFn = oldBind.call(this, thisArg, ...args);
     _setSource(this, newFn);
-    _setPBState(this, newFn, BOUND);
-    console.log('this', this, _pbState.get(this));
-    console.log('newFn', newFn, _pbState.get(newFn));
-    _bound.add(newFn);
+    _setPBState(this, newFn, IS_BOUND);
     return newFn;
   };
 
   console.log(
     `[GetFunctionType] 'Proxy' and 'bind' are injected for precise function features detection.`
   );
+
+  const _be = (o: any, binaryNum: number) => Boolean((_pbState.get(o) ?? 0) & binaryNum);
 
   return {
     createProxyDirectly: function <T extends object>(
@@ -91,10 +92,10 @@ const createTracker = () => {
     bindDirectly: function (this: any, thisArg: any, ...args: any[]) {
       return oldBind.call(this, thisArg, ...args);
     },
-    isProxy: (o: any) => _proxied.has(o),
-    isBound: (o: any) => _bound.has(o),
-    wasProxy: (o: any) => Boolean((_pbState.get(o) ?? 0) & PROXIED),
-    wasBound: (o: any) => Boolean((_pbState.get(o) ?? 0) & BOUND),
+    isProxy: (o: any) => _be(o, IS_PROXIED),
+    isBound: (o: any) => _be(o, IS_BOUND),
+    wasProxy: (o: any) => _be(o, WAS_PROXIED),
+    wasBound: (o: any) => _be(o, WAS_BOUND),
     getSource: (o: Function) => _source.get(o) ?? o,
     isInjected: true,
   };
