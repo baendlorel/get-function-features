@@ -17,7 +17,7 @@ export class FeatureLogic {
    */
   implies(condition: Partial<FunctionFeature>, conclusion: Partial<FunctionFeature>) {
     const conditionList = [] as string[];
-    const conditionKeys = Object.keys(condition);
+    const conditionKeys = Object.keys(condition) as (keyof FunctionFeature)[];
     for (const key of conditionKeys) {
       conditionList.push(`'${key}' = ${condition[key]}`);
       if (this.features[key] !== condition[key]) {
@@ -26,7 +26,7 @@ export class FeatureLogic {
     }
 
     const errorKeys = [] as string[];
-    const conclusionKeys = Object.keys(conclusion);
+    const conclusionKeys = Object.keys(conclusion) as (keyof FunctionFeature)[];
     for (const key of conclusionKeys) {
       if (this.features[key] !== conclusion[key]) {
         errorKeys.push(

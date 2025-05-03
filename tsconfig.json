@@ -6,7 +6,7 @@
     "outDir": "dist",
     "esModuleInterop": true, // 可选，增强兼容性
     "strict": true,
-    "baseUrl": "./",
+    "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
     }

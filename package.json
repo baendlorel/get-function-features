@@ -25,7 +25,7 @@
 	"scripts": {
 		"test": "clear & jest",
 		"cover": "clear & jest --coverage",
-		"build": "rm -rf dist && tsc && uglifyjs ./dist/index.js -c -m -o ./dist/get-function-features.min.js",
+		"build": "rm -rf dist && tsc && tsc-alias && uglifyjs ./dist/index.js -c -m -o ./dist/get-function-features.min.js",
 		"raw": "node tests/raw.js"
 	},
 	"devDependencies": {
@@ -39,6 +39,7 @@
 		"@types/node": "^22.15.3",
 		"babel-jest": "^29.7.0",
 		"jest": "^29.7.0",
+		"tsc-alias": "^1.8.15",
 		"uglify-js": "^3.19.3"
 	},
 	"license": "MIT"

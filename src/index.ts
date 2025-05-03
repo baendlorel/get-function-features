@@ -6,6 +6,7 @@
 import { FeatureLogic, analyser, tracker, FunctionFeatureResult } from '@/core';
 import { err, errLog } from '@/misc';
 
+// TODO 把这个库，打包成一个文件
 const getFunctionFeatures = (fn: any) => {
   if (typeof fn !== 'function') {
     throw new TypeError(`Expected a function, but got ${typeof fn}`);
