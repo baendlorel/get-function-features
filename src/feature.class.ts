@@ -112,14 +112,23 @@ export class FunctionFeature {
     this.xor('isArrow', 'isConstructor');
     this.xor('isArrow', 'isClass');
     this.xor('isArrow', 'isMemberMethod');
-    this.xor('isAsync', 'isConstructor');
-    this.xor('isAsync', 'isClass');
+
+    // 不可同时为真
+    this.nand('isAsync', 'isConstructor');
+    this.nand('isAsync', 'isClass');
+    this.nand('isMemberMethod', 'isConstructor');
+    this.nand('isMemberMethod', 'isClass');
+    this.nand('isGenerator', 'isConstructor');
+    this.nand('isGenerator', 'isClass');
 
     // 类一定是构造函数
     this.implies({ isClass: 'yes' }, { isConstructor: 'yes' });
   }
 
-  get isNormalFunction() {
+  /**
+   * Whether 'fn' is a normal function, defined by `function fn() { }`.
+   */
+  get isNormal() {
     return yesno(this.isConstructor === 'yes' && this.isClass === 'no');
   }
 
@@ -160,7 +169,7 @@ export class FunctionFeature {
   }
 
   /**
-   * 表示两者互斥，状态不能相同，否则记录错误
+   * 异或：表示两者互斥，状态不能相同，否则记录错误
    * @param feature1
    * @param feature2
    */
@@ -169,6 +178,19 @@ export class FunctionFeature {
     const f2 = this[feature2];
     if (f1 === f2 && (f1 === 'no' || f1 === 'yes')) {
       this.errors.push(`'${feature1}' and '${feature2}' cannot be both 'yes' or 'no'`);
+    }
+  }
+
+  /**
+   * 与非：表示两者不可同时为yes
+   * @param feature1
+   * @param feature2
+   */
+  private nand(feature1: FeatureName, feature2: FeatureName) {
+    const f1 = this[feature1];
+    const f2 = this[feature2];
+    if (f1 === f2 && f1 === 'yes') {
+      this.errors.push(`'${feature1}' and '${feature2}' cannot be both 'yes'`);
     }
   }
 }
