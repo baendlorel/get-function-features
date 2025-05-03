@@ -1,7 +1,6 @@
 import { err, warnLog } from './logs';
 import { isNode, justify, toStringProto } from './core';
-import { createProxyDirectly, isInBoundSet, isInProxySet, isInjected } from './inject';
-import { CheckResult } from './feature.class';
+import { createProxyDirectly, hasBeenBound, hasBeenProxied, isInjected } from './inject';
 
 export const scanForNext = (str: string, char: string) => {
   for (let i = 0; i < str.length; i++) {
@@ -156,7 +155,7 @@ export const analyse = (fn: Function) => {
 
 export const isBound = (fn: Function) => {
   if (isInjected()) {
-    return isInBoundSet(fn);
+    return hasBeenBound(fn);
   }
   return fn.name.startsWith('bound ');
 };
@@ -168,7 +167,7 @@ export const isProxy = (o: any) => {
   }
 
   if (isInjected()) {
-    return isInProxySet(o);
+    return hasBeenProxied(o);
   }
 
   warnLog(`Cannot tell if ${o} is a proxy or not, return false.`);

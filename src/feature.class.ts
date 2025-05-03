@@ -201,16 +201,26 @@ export class FunctionFeature {
   }
 
   public toResult() {
-    return {
-      notFunction: this.notFunction,
-      isConstructor: this.isConstructor,
-      isClass: this.isClass,
-      isProxy: this.isProxy,
-      isBound: this.isBound,
-      isArrow: this.isArrow,
-      isAsync: this.isAsync,
-      isMemberMethod: this.isMemberMethod,
-      isGenerator: this.isGenerator,
+    const result = Object.create(null) as {
+      notFunction: boolean;
+      isConstructor: CheckResult;
+      isClass: CheckResult;
+      isProxy: CheckResult;
+      isBound: CheckResult;
+      isArrow: CheckResult;
+      isAsync: CheckResult;
+      isMemberMethod: CheckResult;
+      isGenerator: CheckResult;
     };
+    result.notFunction = this.notFunction;
+    result.isConstructor = this.isConstructor;
+    result.isClass = this.isClass;
+    result.isProxy = this.isProxy;
+    result.isBound = this.isBound;
+    result.isArrow = this.isArrow;
+    result.isAsync = this.isAsync;
+    result.isMemberMethod = this.isMemberMethod;
+    result.isGenerator = this.isGenerator;
+    return result;
   }
 }
