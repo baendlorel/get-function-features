@@ -16,6 +16,9 @@ const createJest = () => {
 
   const describe = (blockName: BlockNameLike, blockFn: BlockFn) => {
     _level++;
+    if (_level < _index.length) {
+      _index.splice(_level);
+    }
     _index[_level - 1] = _index[_level - 1] === undefined ? 1 : _index[_level - 1] + 1;
     _currentCounter = 0;
     describeJest(`${_index.join('.')} ${blockName}`, blockFn);

@@ -23,7 +23,7 @@
 		"nodejs"
 	],
 	"scripts": {
-		"test": "clear & jest",
+		"test": "clear & jest --coverage",
 		"build": "rm -rf dist && tsc && uglifyjs ./dist/index.js -c -m -o ./dist/get-function-features.min.js",
 		"raw": "node tests/raw.js"
 	},
