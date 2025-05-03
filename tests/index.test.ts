@@ -240,7 +240,7 @@ describe('刁钻边界测试用例', () => {
       });
     });
 
-    fit('代理和绑定并用的函数', () => {
+    it('代理和绑定并用的函数', () => {
       // 使用 Proxy 包装的函数
       const originalFn = function () {};
       const bound = originalFn.bind({});
@@ -250,7 +250,8 @@ describe('刁钻边界测试用例', () => {
         },
       });
       expectFeature(proxiedFn, {
-        isBound: true,
+        isBound: false,
+        wasBound: true,
         isProxy: true,
         isArrow: false,
       });
@@ -283,7 +284,8 @@ describe('刁钻边界测试用例', () => {
       const boundFn = proxiedFn.bind({});
       expectFeature(boundFn, {
         isBound: true,
-        isProxy: true,
+        isProxy: false,
+        wasProxy: true,
         isArrow: false,
       });
     });

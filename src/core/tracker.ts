@@ -45,6 +45,8 @@ const createTracker = () => {
       _setSource(target, p);
       _setPBState(target, p, PROXIED);
       _proxied.add(p);
+      console.log('target', target, _pbState.get(target));
+      console.log('p', p, _pbState.get(p));
     }
     return p;
   } as any;
@@ -69,6 +71,8 @@ const createTracker = () => {
     const newFn = oldBind.call(this, thisArg, ...args);
     _setSource(this, newFn);
     _setPBState(this, newFn, BOUND);
+    console.log('this', this, _pbState.get(this));
+    console.log('newFn', newFn, _pbState.get(newFn));
     _bound.add(newFn);
     return newFn;
   };
