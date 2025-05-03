@@ -6,9 +6,11 @@ import {
   isConstructor,
   isGenerator,
   isProxy,
-} from './analyzer';
-import { getSourceFunction } from './inject';
-import { err, errLog } from './logs';
+  wasBound,
+  wasProxy,
+} from '@/analyzer';
+import core from '@/core';
+import { err, errLog } from '@/misc';
 
 const yesno = (b: boolean) => (b ? 'yes' : 'no');
 
@@ -19,6 +21,8 @@ type FeatureName =
   | 'isClass'
   | 'isProxy'
   | 'isBound'
+  | 'wasProxy'
+  | 'wasBound'
   | 'isArrow'
   | 'isAsync'
   | 'isMemberMethod'
@@ -28,66 +32,107 @@ export class FunctionFeature {
   readonly notFunction: boolean;
 
   /**
-   * Whether can be used with 'new' operator. Like 'new fn()'.
+   * 表示是否能像`new fn()`这样当作构造函数用 \
+   * Whether can be used with 'new' operator. Like `new fn()`.
    */
   readonly isConstructor: CheckResult;
 
   /**
-   * Whether the given 'fn' can be only used with 'new' operator, and cannot be called directly.
+   * 表示是否能且仅能像构造函数那样用，不能直接像函数那样用 \
+   * Whether `fn` can be only used with 'new' operator, and cannot be called directly.
    */
   readonly isClass: CheckResult;
 
   /**
-   * Whether the given function is wrapped by Proxy
+   * 判断`fn`是否是一个被代理的函数 \
+   * Whether `fn` is wrapped by Proxy
    */
   readonly isProxy: CheckResult;
 
   /**
-   * Whether the given 'fn' is obtained by 'otherFn.bind'
+   * 判断`fn`是否是一个被别的函数绑定而来的，比如`fn = otherFn.bind(someObject)` \
+   * Whether `fn` is obtained by 'otherFn.bind'
    */
   readonly isBound: CheckResult;
 
+  /**
+   * 判断`fn`是否在生成的过程中曾经被Proxy代理过 \
+   * Whether `fn` was once wrapped by Proxy
+   * @example
+   * ```typescript
+   * const f1 = function () {};
+   * const f2 = new Proxy(f1,{ apply(target,handler){ return something; } });
+   * const f3 = f2.bind({});
+   * const feats = getFunctionFeatures(f3);
+   * feats.wasProxy === 'yes'; // true
+   * ```
+   */
+  readonly wasProxy: CheckResult;
+
+  /**
+   * 判断`fn`是否在生成的过程中曾经被bind过 \
+   * Whether `fn` was once bound
+   * @example
+   * ```typescript
+   * const f1 = function () {};
+   * const f2 = f1.bind({});
+   * const f3 = new Proxy(f2,{ apply(target,handler){ return something; } });
+   * const feats = getFunctionFeatures(f3);
+   * feats.wasBound === 'yes'; // true
+   * ```
+   */
+  readonly wasBound: CheckResult;
+
   // 下面是需要解析函数原文才能知道的内容
   /**
-   * Whether the given 'fn' is an arrow function.
+   * 判断`fn`是否是箭头函数 \
+   * Whether `fn` is an arrow function.
    */
   readonly isArrow: CheckResult;
 
   /**
-   * Whether the given 'fn is an async function.
+   * 判断`fn`是否为异步函数 \
+   * Whether `fn` is an async function.
    */
   readonly isAsync: CheckResult;
 
   /**
-   * Whether the given 'fn' is a member method of an object/class.
+   * 判断`fn`是否是某个类或者某个对象里的成员函数 \
+   * Whether `fn` is a member method of an object/class.
    */
   readonly isMemberMethod: CheckResult;
 
   /**
-   * Whether the given 'fn' is a generator function.
+   * 判断`fn`是否是一个生成器函数 \
+   * Whether `fn` is a generator function.
    */
   readonly isGenerator: CheckResult;
 
   /**
-   * The source function of the given 'fn'.
+   * The source function of `fn`.
    * @description If 'fn' is proxied or bound, this will be the original function.
    */
   readonly source: Function;
 
+  readonly target: Function;
+
   private readonly errors: string[];
 
   constructor(fn: any) {
-    this.errors = [];
+    this.target = fn;
     this.notFunction = typeof fn !== 'function';
     this.isConstructor = 'unknown';
     this.isClass = 'unknown';
     this.isProxy = 'unknown';
+    this.isBound = 'unknown';
+    this.wasProxy = 'unknown';
+    this.wasBound = 'unknown';
     this.isArrow = 'unknown';
     this.isAsync = 'unknown';
     this.isMemberMethod = 'unknown';
-    this.isBound = 'unknown';
     this.isGenerator = 'unknown';
-    this.source = getSourceFunction(fn);
+    this.errors = [];
+    this.source = core.getSource(fn);
     if (this.notFunction) {
       return;
     }
@@ -95,6 +140,8 @@ export class FunctionFeature {
     // source肯定不是bound或proxy的，需要用给定的函数来判定
     this.isProxy = yesno(isProxy(fn));
     this.isBound = yesno(isBound(fn));
+    this.wasProxy = yesno(wasProxy(fn));
+    this.wasBound = yesno(wasBound(fn));
 
     // # 下面的判定由原函数完成，某些也可以由给定函数完成
     const sc = this.source;
@@ -103,6 +150,7 @@ export class FunctionFeature {
 
     // 下面是需要解析函数原文才能知道的内容
     const parsed = analyse(sc);
+
     this.isArrow = yesno(parsed.isArrow);
     this.isMemberMethod = yesno(parsed.isMemberMethod);
     this.isAsync = yesno(isAsync(sc));
@@ -207,16 +255,24 @@ export class FunctionFeature {
       isClass: CheckResult;
       isProxy: CheckResult;
       isBound: CheckResult;
+      wasProxy: CheckResult;
+      wasBound: CheckResult;
       isArrow: CheckResult;
       isAsync: CheckResult;
       isMemberMethod: CheckResult;
       isGenerator: CheckResult;
+      source: Function;
+      target: Function;
     };
+    result.source = this.source;
+    result.target = this.target;
     result.notFunction = this.notFunction;
     result.isConstructor = this.isConstructor;
     result.isClass = this.isClass;
     result.isProxy = this.isProxy;
     result.isBound = this.isBound;
+    result.wasProxy = this.wasProxy;
+    result.wasBound = this.wasProxy;
     result.isArrow = this.isArrow;
     result.isAsync = this.isAsync;
     result.isMemberMethod = this.isMemberMethod;

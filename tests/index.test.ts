@@ -1,12 +1,12 @@
 import { expect } from '@jest/globals';
 import { describe, it } from './injected-jest';
-import getFunctionType from '../src/index';
+import getFunctionFeatures from '../src/index';
 import { FunctionFeature } from '../src/feature.class';
-import { extractToStringProto } from '../src/core';
+import { extractToStringProto } from '../src/misc';
 
 describe('刁钻边界测试用例', () => {
   const expectFeature = (fn: Function, expected: Partial<FunctionFeature>) =>
-    expect(getFunctionType(fn)).toEqual(expect.objectContaining(expected));
+    expect(getFunctionFeatures(fn)).toEqual(expect.objectContaining(expected));
 
   describe('篡改', () => {
     it('Function.prototype.toString 被篡改的情况', () => {
@@ -255,13 +255,29 @@ describe('刁钻边界测试用例', () => {
       // 使用 Proxy 包装的函数
       const originalFn = function () {};
       const boundFn = originalFn.bind({});
-      const proxiedFn = new Proxy(originalFn, {
+      const revocable = Proxy.revocable(originalFn, {
         apply(target, thisArg, args) {
           return target.apply(thisArg, args);
         },
       });
-      expectFeature(proxiedFn, {
+      expectFeature(revocable.proxy, {
         isBound: 'no',
+        isProxy: 'yes',
+        isArrow: 'no',
+      });
+    });
+
+    it('先代理后绑定，看看能否看出代理过', () => {
+      // 使用 Proxy 包装的函数
+      const originalFn = function () {};
+      const proxiedFn = new Proxy(originalFn.bind({}), {
+        apply(target, thisArg, args) {
+          return target.apply(thisArg, args);
+        },
+      });
+      const boundFn = proxiedFn.bind({});
+      expectFeature(boundFn, {
+        isBound: 'yes',
         isProxy: 'yes',
         isArrow: 'no',
       });

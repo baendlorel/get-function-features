@@ -1,5 +1,7 @@
 import { err } from './logs';
 
+export * from './logs';
+
 export const nativeCode = (functionName?: string) =>
   `function ${functionName ?? ''}() { [native code] }`;
 

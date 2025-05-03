@@ -1,4 +1,4 @@
-const inject = () => {
+const core = () => {
   // 通过注入Proxy和bind来实现标记判定，这样的判定是100%准确的
   let _injectionFlag = false;
 
@@ -8,6 +8,8 @@ const inject = () => {
 
   const _source = new WeakMap<Function, Function>();
   const _pbState = new WeakMap<Function, number>();
+  const _bound = new WeakSet<Function>();
+  const _proxied = new WeakSet<Function>();
 
   const _setSource = (target: Function, newFn: Function) => {
     // 如果target也有源头，那么设置为target的源头
@@ -40,16 +42,19 @@ const inject = () => {
     if (typeof target === 'function') {
       _setSource(target, p);
       _setPBState(target, p, PROXIED);
+      _proxied.add(p);
     }
     return p;
   } as any;
 
   newProxy.revocable = function <T extends object>(target: T, handler: ProxyHandler<T>) {
     // 创建原版
-    const revocable = _Proxy.revocable(target, handler) as any;
+    const revocable = _Proxy.revocable(target, handler);
+    const p = revocable.proxy as Function;
     if (typeof target === 'function') {
-      _setSource(target, revocable.proxy);
-      _setPBState(target, revocable.proxy, PROXIED);
+      _setSource(target, p);
+      _setPBState(target, p, PROXIED);
+      _proxied.add(p);
     }
     return revocable;
   };
@@ -62,6 +67,7 @@ const inject = () => {
     const newFn = oldBind.call(this, thisArg, ...args);
     _setSource(this, newFn);
     _setPBState(this, newFn, BOUND);
+    _bound.add(newFn);
     return newFn;
   };
 
@@ -81,18 +87,15 @@ const inject = () => {
     bindDirectly: function (this: any, thisArg: any, ...args: any[]) {
       return oldBind.call(this, thisArg, ...args);
     },
-    hasBeenProxied: (o: any) => Boolean((_pbState.get(o) ?? 0) & PROXIED),
-    hasBeenBound: (o: any) => Boolean((_pbState.get(o) ?? 0) & BOUND),
-    getSourceFunction: (o: Function) => _source.get(o) ?? o,
-    isInjected: () => _injectionFlag,
+    isProxy: (o: any) => _proxied.has(o),
+    isBound: (o: any) => _bound.has(o),
+    wasProxy: (o: any) => Boolean((_pbState.get(o) ?? 0) & PROXIED),
+    wasBound: (o: any) => Boolean((_pbState.get(o) ?? 0) & BOUND),
+    getSource: (o: Function) => _source.get(o) ?? o,
+    get isInjected() {
+      return _injectionFlag;
+    },
   };
 };
 
-export const {
-  createProxyDirectly,
-  bindDirectly,
-  hasBeenProxied,
-  hasBeenBound,
-  isInjected,
-  getSourceFunction,
-} = inject();
+export default core();

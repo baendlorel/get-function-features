@@ -1,8 +1,7 @@
-import { err, warnLog } from './logs';
-import { isNode, justify, toStringProto } from './core';
-import { createProxyDirectly, hasBeenBound, hasBeenProxied, isInjected } from './inject';
+import core from './core';
+import { err, warnLog, isNode, justify, toStringProto } from '@/misc';
 
-export const scanForNext = (str: string, char: string) => {
+const scanForNext = (str: string, char: string) => {
   for (let i = 0; i < str.length; i++) {
     const c = str[i];
     if (c === '\\') {
@@ -21,7 +20,16 @@ export const scanForNext = (str: string, char: string) => {
  * 1、使用了单引号，那么结果会用双引号包裹 \
  * 2、双引号或反引号,会用单引号包裹 \
  * 3、如果使用了两种引号，那么会用第三种没用过的引号包裹 \
- * 4、如果三种都用，那么会用单引号包裹，并将单引号转义
+ * 4、如果三种都用，那么会用单引号包裹，并将单引号转义 \
+ * ✅ 令人惊喜的是这个函数写了一遍就通过了，没有错误
+ *
+ * When using toString() on a function that has default parameters using a combination of single quotes, double quotes, and backticks:
+ * 1. If single quotes are used, the result will be wrapped in double quotes \
+ * 2. If double quotes or backticks are used, the result will be wrapped in single quotes \
+ * 3. If two types of quotes are used, the result will be wrapped in the third unused quote type \
+ * 4. If all three types of quotes are used, the result will be wrapped in single quotes and the single quotes within will be escaped \
+ *
+ * ✅ Surprisingly, this 'analyse' function worked on the first try with no errors
  * @param fnStr
  * @returns
  */
@@ -153,26 +161,43 @@ export const analyse = (fn: Function) => {
   };
 };
 
-export const isBound = (fn: Function) => {
-  if (isInjected()) {
-    return hasBeenBound(fn);
-  }
-  return fn.name.startsWith('bound ');
-};
-
 export const isProxy = (o: any) => {
   if (isNode()) {
     const util = require('node:util') as typeof import('util');
     return util.types.isProxy(o);
   }
 
-  if (isInjected()) {
-    return hasBeenProxied(o);
+  if (core.isInjected) {
+    return core.isProxy(o);
   }
 
   warnLog(`Cannot tell if ${o} is a proxy or not, return false.`);
   // 一般不会到这里
   return false;
+};
+
+export const isBound = (fn: Function) => {
+  if (core.isInjected) {
+    return core.isBound(fn);
+  }
+  return fn.name.startsWith('bound ');
+};
+
+export const wasProxy = (o: any) => {
+  if (core.isInjected) {
+    return core.wasProxy(o);
+  }
+
+  warnLog(`Cannot tell if ${o} was a proxy or not, return false.`);
+  // 一般不会到这里
+  return false;
+};
+
+export const wasBound = (fn: Function) => {
+  if (core.isInjected) {
+    return core.wasBound(fn);
+  }
+  return fn.name.includes('bound ');
 };
 
 /**
@@ -185,7 +210,7 @@ export const isProxy = (o: any) => {
  */
 export const isConstructor = (fn: any) => {
   try {
-    const fp = createProxyDirectly(fn, {
+    const fp = core.createProxyDirectly(fn, {
       construct(target, args) {
         return {};
       },
@@ -213,7 +238,7 @@ export const isConstructor = (fn: any) => {
 
 export const isClass = (fn: any) => {
   try {
-    const fp = createProxyDirectly(fn, {
+    const fp = core.createProxyDirectly(fn, {
       apply(target, args) {
         return {};
       },

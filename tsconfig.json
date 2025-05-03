@@ -6,11 +6,11 @@
     "outDir": "dist",
     "esModuleInterop": true, // 可选，增强兼容性
     "strict": true,
-    "baseUrl": ".", // 相对路径的起点
+    "baseUrl": "./",
     "paths": {
-      "@/*": ["src/*"] // 把 @ 映射到 src
+      "@/*": ["src/*"]
     }
   },
-  "include": ["src/*.ts"],
+  "include": ["src/*.ts", "src/misc/index.ts", "src/misc/logs.ts"],
   "exclude": ["tests"]
 }
