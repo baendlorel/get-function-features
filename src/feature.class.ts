@@ -8,6 +8,7 @@ import {
   isProxy,
 } from './analyzer';
 import { getSourceFunction } from './inject';
+import { err, errLog } from './logs';
 
 const yesno = (b: boolean) => (b ? 'yes' : 'no');
 
@@ -109,11 +110,11 @@ export class FunctionFeature {
 
     // # 逻辑闭环
     // 互斥组
-    this.xor('isArrow', 'isConstructor');
-    this.xor('isArrow', 'isClass');
-    this.xor('isArrow', 'isMemberMethod');
 
     // 不可同时为真
+    this.nand('isArrow', 'isConstructor');
+    this.nand('isArrow', 'isMemberMethod');
+    this.nand('isArrow', 'isClass');
     this.nand('isAsync', 'isConstructor');
     this.nand('isAsync', 'isClass');
     this.nand('isMemberMethod', 'isConstructor');
@@ -123,6 +124,11 @@ export class FunctionFeature {
 
     // 类一定是构造函数
     this.implies({ isClass: 'yes' }, { isConstructor: 'yes' });
+
+    if (this.errors.length > 0) {
+      errLog('logic errors:\n', this.errors.join('\n'));
+      throw err('Logic errors detected');
+    }
   }
 
   /**
@@ -192,5 +198,19 @@ export class FunctionFeature {
     if (f1 === f2 && f1 === 'yes') {
       this.errors.push(`'${feature1}' and '${feature2}' cannot be both 'yes'`);
     }
+  }
+
+  public toResult() {
+    return {
+      notFunction: this.notFunction,
+      isConstructor: this.isConstructor,
+      isClass: this.isClass,
+      isProxy: this.isProxy,
+      isBound: this.isBound,
+      isArrow: this.isArrow,
+      isAsync: this.isAsync,
+      isMemberMethod: this.isMemberMethod,
+      isGenerator: this.isGenerator,
+    };
   }
 }

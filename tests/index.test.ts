@@ -65,6 +65,7 @@ describe('刁钻边界测试用例', () => {
   it('嵌套多层括号的箭头函数', () => {
     // 箭头函数参数包含多层括号的解构
     const fn = eval(`([{a: {b: {c: {d}}}}]) => ({...d})`);
+    console.log('嵌套多', fn, fn.toString());
     expectFeature(fn, {
       isArrow: 'yes',
     });
@@ -116,6 +117,22 @@ describe('刁钻边界测试用例', () => {
     });
   });
 
+  it('成员函数', () => {
+    class A {
+      fn() {}
+    }
+
+    const a = new A();
+    const fn = a.fn;
+
+    expectFeature(fn, {
+      isArrow: 'no',
+      isConstructor: 'no',
+      isMemberMethod: 'yes',
+      isGenerator: 'no',
+    });
+  });
+
   it('异步生成器函数', () => {
     // 异步生成器函数
     async function* fn() {
@@ -145,7 +162,7 @@ describe('刁钻边界测试用例', () => {
     });
   });
 
-  fit('绑定的函数', () => {
+  it('绑定的函数', () => {
     // 多次绑定的函数
     const fn = function () {
       return this;
@@ -179,6 +196,21 @@ describe('刁钻边界测试用例', () => {
       isConstructor: 'no',
       isMemberMethod: 'no',
       isGenerator: 'no',
+    });
+  });
+
+  it('代理和绑定并用的函数', () => {
+    // 使用 Proxy 包装的函数
+    const originalFn = function () {};
+    const proxiedFn = new Proxy(originalFn.bind({}), {
+      apply(target, thisArg, args) {
+        return target.apply(thisArg, args);
+      },
+    });
+    expectFeature(proxiedFn, {
+      isBound: 'yes',
+      isProxy: 'yes',
+      isArrow: 'no',
     });
   });
 });

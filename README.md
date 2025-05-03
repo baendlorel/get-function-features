@@ -1,12 +1,46 @@
 # Get-function-type
 
-JS/TS functions are divided into arrow functions, normal functions, member functions, async functions, and bound functions. This package aims to know which type it is.
+JS/TS functions have many features, this package will show every feature it can detect.
 
 Can be used both on javascript and typescript projects.
 
 ## Requirement
 
 Your environment must support Proxy.
+
+## Return value
+
+The return value of `getFunctionFeatures` would be like this:
+
+```typescript
+const result = {
+  notFunction: false,
+  isConstructor: 'yes',
+  isClass: 'yes',
+  isProxy: 'no',
+  isBound: 'no',
+  isArrow: 'no',
+  isAsync: 'no',
+  isMemberMethod: 'no',
+  isGenerator: 'no',
+};
+```
+
+- `notFunction`: if the input is not a function, the result would be like this:
+
+```typescript
+const result = {
+  notFunction: true,
+  isConstructor: 'unknown',
+  isClass: 'unknown',
+  isProxy: 'unknown',
+  isBound: 'unknown',
+  isArrow: 'unknown',
+  isAsync: 'unknown',
+  isMemberMethod: 'unknown',
+  isGenerator: 'unknown',
+};
+```
 
 ## Mechanism
 

@@ -29,7 +29,6 @@ const inject = () => {
       setSource(target, p as Function);
       proxiedFns.add(p as Function);
     }
-    console.log('new proxy made');
     return p;
   } as any;
 
@@ -40,7 +39,6 @@ const inject = () => {
       setSource(target, revocable.proxy as Function);
       proxiedFns.add(revocable.proxy as Function);
     }
-    console.log('new proxy made');
     return revocable;
   };
   // 改写
@@ -52,13 +50,6 @@ const inject = () => {
     const newFn = oldBind.call(this, thisArg, ...args);
     setSource(this, newFn);
     boundFns.add(newFn);
-    console.log(
-      'New bound function created:',
-      newFn.name,
-      'Added to set:',
-      boundFns.has(newFn)
-    );
-
     return newFn;
   };
 
@@ -81,9 +72,7 @@ export const { createProxyDirectly, bindDirectly } = inject();
 
 export const isInProxySet = (o: any) => proxiedFns.has(o);
 
-export const isInBoundSet = (o: any) => (
-  console.log(o, boundFns.has(o), boundFns.size, sourceMap.has(o)), boundFns.has(o)
-);
+export const isInBoundSet = (o: any) => boundFns.has(o);
 
 export const getSourceFunction = (o: Function) => sourceMap.get(o) ?? o;
 

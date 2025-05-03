@@ -215,7 +215,7 @@ export const isConstructor = (fn: any) => {
 export const isClass = (fn: any) => {
   try {
     const fp = createProxyDirectly(fn, {
-      construct(target, args) {
+      apply(target, args) {
         return {};
       },
     });
@@ -231,7 +231,7 @@ export const isClass = (fn: any) => {
     }
     console.error(
       '[GetFunctionType]',
-      '发生了未知错误。An unknown error occurred.',
+      'An unknown runtime error occurred.',
       'fn:',
       fn,
       error
