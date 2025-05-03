@@ -1,8 +1,8 @@
 import { expect } from '@jest/globals';
 import { describe, it } from './injected-jest';
-import getFunctionFeatures from '../src/index';
-import { FunctionFeature } from '../src/feature.class';
+import { FunctionFeature } from '../src/core';
 import { extractToStringProto } from '../src/misc';
+import getFunctionFeatures from '../src/index';
 
 describe('刁钻边界测试用例', () => {
   const expectFeature = (fn: Function, expected: Partial<FunctionFeature>) =>
@@ -25,6 +25,12 @@ describe('刁钻边界测试用例', () => {
   });
 
   describe('通常的函数情形', () => {
+    it('不是函数，应该报错', () => {
+      // 包含所有三种引号和注释的箭头函数
+      const fn = {};
+      expect(() => getFunctionFeatures(fn)).toThrowError();
+    });
+
     it('包含注释和引号的箭头函数', () => {
       // 包含所有三种引号和注释的箭头函数
       const fn = eval(`() => {
@@ -37,13 +43,12 @@ describe('刁钻边界测试用例', () => {
    
     }`);
       expectFeature(fn, {
-        notFunction: false,
-        isArrow: 'yes',
-        isAsync: 'no',
-        isMemberMethod: 'no',
-        isConstructor: 'no',
-        isProxy: 'no',
-        isBound: 'no',
+        isArrow: true,
+        isAsync: false,
+        isMemberMethod: false,
+        isConstructor: false,
+        isProxy: false,
+        isBound: false,
       });
     });
 
@@ -54,12 +59,12 @@ describe('刁钻边界测试用例', () => {
       };
 
       expectFeature(fn, {
-        isArrow: 'no',
-        isAsync: 'no',
-        isMemberMethod: 'no',
-        isConstructor: 'yes',
-        isProxy: 'no',
-        isBound: 'no',
+        isArrow: false,
+        isAsync: false,
+        isMemberMethod: false,
+        isConstructor: true,
+        isProxy: false,
+        isBound: false,
       });
     });
 
@@ -68,7 +73,7 @@ describe('刁钻边界测试用例', () => {
       const fn = eval(`([{a: {b: {c: {d}}}}]) => ({...d})`);
       console.log('嵌套多', fn, fn.toString());
       expectFeature(fn, {
-        isArrow: 'yes',
+        isArrow: true,
       });
     });
 
@@ -76,8 +81,8 @@ describe('刁钻边界测试用例', () => {
       // 带名字的箭头函数（虽然箭头函数自身无法命名，但赋值给变量算是一种"命名"）
       const fn = () => {};
       expectFeature(fn, {
-        isArrow: 'yes',
-        isConstructor: 'no',
+        isArrow: true,
+        isConstructor: false,
       });
     });
 
@@ -85,8 +90,8 @@ describe('刁钻边界测试用例', () => {
       // 使用 new Function 创建的函数
       const fn = new Function('a', 'b', 'return a + b');
       expectFeature(fn, {
-        isArrow: 'no',
-        isConstructor: 'yes',
+        isArrow: false,
+        isConstructor: true,
       });
     });
 
@@ -98,9 +103,9 @@ describe('刁钻边界测试用例', () => {
         },
       };
       expectFeature(obj['complex[name]'], {
-        isArrow: 'no',
-        isConstructor: 'no',
-        isMemberMethod: 'yes',
+        isArrow: false,
+        isConstructor: false,
+        isMemberMethod: true,
       });
     });
 
@@ -112,9 +117,9 @@ describe('刁钻边界测试用例', () => {
         },
       };
       expectFeature(obj.method, {
-        isArrow: 'no',
-        isConstructor: 'no',
-        isMemberMethod: 'yes',
+        isArrow: false,
+        isConstructor: false,
+        isMemberMethod: true,
       });
     });
 
@@ -127,10 +132,10 @@ describe('刁钻边界测试用例', () => {
       const fn = a.fn;
 
       expectFeature(fn, {
-        isArrow: 'no',
-        isConstructor: 'no',
-        isMemberMethod: 'yes',
-        isGenerator: 'no',
+        isArrow: false,
+        isConstructor: false,
+        isMemberMethod: true,
+        isGenerator: false,
       });
     });
 
@@ -142,11 +147,11 @@ describe('刁钻边界测试用例', () => {
       }
 
       expectFeature(fn, {
-        isArrow: 'no',
-        isAsync: 'yes',
-        isConstructor: 'no',
-        isMemberMethod: 'no',
-        isGenerator: 'yes',
+        isArrow: false,
+        isAsync: true,
+        isConstructor: false,
+        isMemberMethod: false,
+        isGenerator: true,
       });
     });
 
@@ -155,11 +160,11 @@ describe('刁钻边界测试用例', () => {
       const fn = ({ a = 1, b = 2 } = {}) => a + b;
 
       expectFeature(fn, {
-        isArrow: 'yes',
-        isAsync: 'no',
-        isConstructor: 'no',
-        isMemberMethod: 'no',
-        isGenerator: 'no',
+        isArrow: true,
+        isAsync: false,
+        isConstructor: false,
+        isMemberMethod: false,
+        isGenerator: false,
       });
     });
 
@@ -171,7 +176,7 @@ describe('刁钻边界测试用例', () => {
       }[asymbol];
 
       expectFeature(fn, {
-        isArrow: 'yes',
+        isArrow: true,
       });
     });
 
@@ -183,7 +188,7 @@ describe('刁钻边界测试用例', () => {
       }[asymbol];
 
       expectFeature(fn, {
-        isArrow: 'yes',
+        isArrow: true,
       });
     });
 
@@ -194,7 +199,7 @@ describe('刁钻边界测试用例', () => {
       }[Symbol.for('a')];
 
       expectFeature(fn, {
-        isArrow: 'yes',
+        isArrow: true,
       });
     });
   });
@@ -207,13 +212,13 @@ describe('刁钻边界测试用例', () => {
       };
       const boundOnce = fn.bind({ x: 1 });
       expectFeature(boundOnce, {
-        isBound: 'yes',
-        isProxy: 'no',
-        isArrow: 'no',
-        isAsync: 'no',
-        isConstructor: 'yes',
-        isMemberMethod: 'no',
-        isGenerator: 'no',
+        isBound: true,
+        isProxy: false,
+        isArrow: false,
+        isAsync: false,
+        isConstructor: true,
+        isMemberMethod: false,
+        isGenerator: false,
       });
     });
 
@@ -226,13 +231,13 @@ describe('刁钻边界测试用例', () => {
         },
       });
       expectFeature(proxiedFn, {
-        isBound: 'no',
-        isProxy: 'yes',
-        isArrow: 'yes',
-        isAsync: 'no',
-        isConstructor: 'no',
-        isMemberMethod: 'no',
-        isGenerator: 'no',
+        isBound: false,
+        isProxy: true,
+        isArrow: true,
+        isAsync: false,
+        isConstructor: false,
+        isMemberMethod: false,
+        isGenerator: false,
       });
     });
 
@@ -245,9 +250,9 @@ describe('刁钻边界测试用例', () => {
         },
       });
       expectFeature(proxiedFn, {
-        isBound: 'yes',
-        isProxy: 'yes',
-        isArrow: 'no',
+        isBound: true,
+        isProxy: true,
+        isArrow: false,
       });
     });
 
@@ -261,9 +266,9 @@ describe('刁钻边界测试用例', () => {
         },
       });
       expectFeature(revocable.proxy, {
-        isBound: 'no',
-        isProxy: 'yes',
-        isArrow: 'no',
+        isBound: false,
+        isProxy: true,
+        isArrow: false,
       });
     });
 
@@ -277,9 +282,9 @@ describe('刁钻边界测试用例', () => {
       });
       const boundFn = proxiedFn.bind({});
       expectFeature(boundFn, {
-        isBound: 'yes',
-        isProxy: 'yes',
-        isArrow: 'no',
+        isBound: true,
+        isProxy: true,
+        isArrow: false,
       });
     });
   });

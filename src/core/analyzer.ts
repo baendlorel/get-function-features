@@ -1,4 +1,4 @@
-import core from './core';
+import { tracker } from './tracker';
 import { err, warnLog, isNode, justify, toStringProto } from '@/misc';
 
 const scanForNext = (str: string, char: string) => {
@@ -14,6 +14,25 @@ const scanForNext = (str: string, char: string) => {
   }
   return -1;
 };
+
+interface Analyser {
+  (fn: Function): {
+    symbolName: string | undefined;
+    name: string;
+    params: string;
+    body: string;
+    isArrow: boolean;
+    isMemberMethod: boolean;
+  };
+  isProxy: (fn: Function) => boolean;
+  isBound: (fn: Function) => boolean;
+  wasProxy: (fn: Function) => boolean;
+  wasBound: (fn: Function) => boolean;
+  isConstructor: (fn: Function) => boolean;
+  isClass: (fn: Function) => boolean;
+  isAsync: (fn: Function) => boolean;
+  isGenerator: (fn: Function) => boolean;
+}
 
 /**
  * 如果toString一个函数，默认值用到了单、双、反这三种引号的组合。那么会出现：\
@@ -33,7 +52,7 @@ const scanForNext = (str: string, char: string) => {
  * @param fnStr
  * @returns
  */
-export const analyse = (fn: Function) => {
+const analyser = ((fn: Function) => {
   const fnStr = toStringProto(fn);
   let leftParenthesesIndex = -1;
   let rightParenthesesIndex = -1;
@@ -159,43 +178,43 @@ export const analyse = (fn: Function) => {
       name.startsWith('async function ')
     ),
   };
-};
+}) as Analyser;
 
-export const isProxy = (o: any) => {
+analyser.isProxy = (fn: any) => {
   if (isNode()) {
     const util = require('node:util') as typeof import('util');
-    return util.types.isProxy(o);
+    return util.types.isProxy(fn);
   }
 
-  if (core.isInjected) {
-    return core.isProxy(o);
+  if (tracker.isInjected) {
+    return tracker.isProxy(fn);
   }
 
-  warnLog(`Cannot tell if ${o} is a proxy or not, return false.`);
+  warnLog(`Cannot tell if ${fn} is a proxy or not, return false.`);
   // 一般不会到这里
   return false;
 };
 
-export const isBound = (fn: Function) => {
-  if (core.isInjected) {
-    return core.isBound(fn);
+analyser.isBound = (fn: Function) => {
+  if (tracker.isInjected) {
+    return tracker.isBound(fn);
   }
   return fn.name.startsWith('bound ');
 };
 
-export const wasProxy = (o: any) => {
-  if (core.isInjected) {
-    return core.wasProxy(o);
+analyser.wasProxy = (fn: any) => {
+  if (tracker.isInjected) {
+    return tracker.wasProxy(fn);
   }
 
-  warnLog(`Cannot tell if ${o} was a proxy or not, return false.`);
+  warnLog(`Cannot tell if ${fn} was a proxy or not, return false.`);
   // 一般不会到这里
   return false;
 };
 
-export const wasBound = (fn: Function) => {
-  if (core.isInjected) {
-    return core.wasBound(fn);
+analyser.wasBound = (fn: Function) => {
+  if (tracker.isInjected) {
+    return tracker.wasBound(fn);
   }
   return fn.name.includes('bound ');
 };
@@ -208,9 +227,9 @@ export const wasBound = (fn: Function) => {
  * @param fn
  * @returns
  */
-export const isConstructor = (fn: any) => {
+analyser.isConstructor = (fn: any) => {
   try {
-    const fp = core.createProxyDirectly(fn, {
+    const fp = tracker.createProxyDirectly(fn, {
       construct(target, args) {
         return {};
       },
@@ -236,9 +255,9 @@ export const isConstructor = (fn: any) => {
   }
 };
 
-export const isClass = (fn: any) => {
+analyser.isClass = (fn: any) => {
   try {
-    const fp = core.createProxyDirectly(fn, {
+    const fp = tracker.createProxyDirectly(fn, {
       apply(target, args) {
         return {};
       },
@@ -264,7 +283,7 @@ export const isClass = (fn: any) => {
   }
 };
 
-export const isAsync = (fn: Function) => {
+analyser.isAsync = (fn: Function) => {
   if (isNode()) {
     const util = require('node:util') as typeof import('util');
     return util.types.isAsyncFunction(fn);
@@ -278,7 +297,7 @@ export const isAsync = (fn: Function) => {
   );
 };
 
-export const isGenerator = (fn: Function) => {
+analyser.isGenerator = (fn: Function) => {
   if (isNode()) {
     const util = require('node:util') as typeof import('util');
     return util.types.isGeneratorFunction(fn);
@@ -293,3 +312,5 @@ export const isGenerator = (fn: Function) => {
     fnStr.startsWith('*')
   );
 };
+
+export { analyser };

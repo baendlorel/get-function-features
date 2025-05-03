@@ -1,6 +1,5 @@
-const core = () => {
+const createTracker = () => {
   // 通过注入Proxy和bind来实现标记判定，这样的判定是100%准确的
-  let _injectionFlag = false;
 
   const PROXIED = 0b01 as const;
   const BOUND = 0b10 as const;
@@ -71,8 +70,6 @@ const core = () => {
     return newFn;
   };
 
-  _injectionFlag = true;
-
   console.log(
     `[GetFunctionType] 'Proxy' and 'bind' are injected for precise function features detection.`
   );
@@ -92,10 +89,8 @@ const core = () => {
     wasProxy: (o: any) => Boolean((_pbState.get(o) ?? 0) & PROXIED),
     wasBound: (o: any) => Boolean((_pbState.get(o) ?? 0) & BOUND),
     getSource: (o: Function) => _source.get(o) ?? o,
-    get isInjected() {
-      return _injectionFlag;
-    },
+    isInjected: true,
   };
 };
 
-export default core();
+export const tracker = createTracker();

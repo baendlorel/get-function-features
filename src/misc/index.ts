@@ -5,9 +5,7 @@ export * from './logs';
 export const nativeCode = (functionName?: string) =>
   `function ${functionName ?? ''}() { [native code] }`;
 
-export const isNode = () => {
-  return process?.versions?.node !== undefined;
-};
+export const isNode = process?.versions?.node !== undefined;
 
 export const justify = (str: string) => {
   return str.trim().replace(/\s+/g, ' ');
@@ -57,3 +55,5 @@ export const extractToStringProto = () => {
 };
 
 export const toStringProto = extractToStringProto();
+
+export const yesno = (b: boolean) => (b ? 'yes' : 'no');
