@@ -3,7 +3,6 @@ const createTracker = () => {
 
   const PROXIED = 0b01 as const;
   const BOUND = 0b10 as const;
-  type PBState = typeof PROXIED | typeof BOUND;
 
   const _source = new WeakMap<Function, Function>();
   const _pbState = new WeakMap<Function, number>();
@@ -22,7 +21,11 @@ const createTracker = () => {
     _source.set(newFn, target);
   };
 
-  const _setPBState = (target: Function, newFn: Function, state: PBState) => {
+  const _setPBState = (
+    target: Function,
+    newFn: Function,
+    state: typeof PROXIED | typeof BOUND
+  ) => {
     if (_pbState.has(target)) {
       const oldState = _pbState.get(target) as number;
       _pbState.set(newFn, oldState | state);

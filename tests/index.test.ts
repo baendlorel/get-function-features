@@ -1,12 +1,12 @@
 import { expect } from '@jest/globals';
-import { describe, it } from './injected-jest';
+import { describe, it, fit } from './injected-jest';
 import { FunctionFeature } from '../src/core';
 import { extractToStringProto } from '../src/misc';
 import getFunctionFeatures from '../src/index';
 
 describe('刁钻边界测试用例', () => {
   const expectFeature = (fn: Function, expected: Partial<FunctionFeature>) =>
-    expect(getFunctionFeatures(fn)).toEqual(expect.objectContaining(expected));
+    expect(getFunctionFeatures(fn)).toMatchObject(expected);
 
   describe('篡改', () => {
     it('Function.prototype.toString 被篡改的情况', () => {
@@ -71,7 +71,6 @@ describe('刁钻边界测试用例', () => {
     it('嵌套多层括号的箭头函数', () => {
       // 箭头函数参数包含多层括号的解构
       const fn = eval(`([{a: {b: {c: {d}}}}]) => ({...d})`);
-      console.log('嵌套多', fn, fn.toString());
       expectFeature(fn, {
         isArrow: true,
       });
@@ -241,10 +240,11 @@ describe('刁钻边界测试用例', () => {
       });
     });
 
-    it('代理和绑定并用的函数', () => {
+    fit('代理和绑定并用的函数', () => {
       // 使用 Proxy 包装的函数
       const originalFn = function () {};
-      const proxiedFn = new Proxy(originalFn.bind({}), {
+      const bound = originalFn.bind({});
+      const proxiedFn = new Proxy(bound, {
         apply(target, thisArg, args) {
           return target.apply(thisArg, args);
         },

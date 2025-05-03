@@ -181,7 +181,7 @@ const analyser = ((fn: Function) => {
 }) as Analyser;
 
 analyser.isProxy = (fn: any) => {
-  if (isNode()) {
+  if (isNode) {
     const util = require('node:util') as typeof import('util');
     return util.types.isProxy(fn);
   }
@@ -284,7 +284,7 @@ analyser.isClass = (fn: any) => {
 };
 
 analyser.isAsync = (fn: Function) => {
-  if (isNode()) {
+  if (isNode) {
     const util = require('node:util') as typeof import('util');
     return util.types.isAsyncFunction(fn);
   }
@@ -298,7 +298,7 @@ analyser.isAsync = (fn: Function) => {
 };
 
 analyser.isGenerator = (fn: Function) => {
-  if (isNode()) {
+  if (isNode) {
     const util = require('node:util') as typeof import('util');
     return util.types.isGeneratorFunction(fn);
   }

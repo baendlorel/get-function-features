@@ -1,4 +1,4 @@
-import { it as itJest, describe as describeJest } from '@jest/globals';
+import { it as itJest, fit as fitJest, describe as describeJest } from '@jest/globals';
 
 type TestNameLike = Parameters<typeof itJest>[0];
 type TestFn = Parameters<typeof itJest>[1];
@@ -32,10 +32,17 @@ const createJest = () => {
     itJest(`${_p(_currentCounter)}. ${testName} (G-${_globalCounter})`, fn, timeout);
   };
 
+  const fit = (testName: TestNameLike, fn: TestFn, timeout?: number) => {
+    _currentCounter++;
+    _globalCounter++;
+    fitJest(`${_p(_currentCounter)}. ${testName} (G-${_globalCounter})`, fn, timeout);
+  };
+
   return {
     describe,
     it,
+    fit,
   };
 };
 
-export const { describe, it } = createJest();
+export const { describe, it, fit } = createJest();

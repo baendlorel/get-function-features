@@ -3,7 +3,7 @@
  * @author Kasukabe Tsumugi <futami16237@gmail.com>
  * @license MIT
  */
-import { analyser, FeatureLogic, FunctionFeatureResult, tracker } from '@/core';
+import { FeatureLogic, analyser, tracker, FunctionFeatureResult } from '@/core';
 import { err, errLog } from '@/misc';
 
 const getFunctionFeatures = (fn: any) => {
@@ -60,4 +60,4 @@ const getFunctionFeatures = (fn: any) => {
   return features;
 };
 
-export = getFunctionFeatures;
+export default getFunctionFeatures;

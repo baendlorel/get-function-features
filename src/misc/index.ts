@@ -55,5 +55,3 @@ export const extractToStringProto = () => {
 };
 
 export const toStringProto = extractToStringProto();
-
-export const yesno = (b: boolean) => (b ? 'yes' : 'no');

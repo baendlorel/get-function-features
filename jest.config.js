@@ -1,5 +1,7 @@
 export default {
-  collectCoverage: true,
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/src/$1',
+  },
   collectCoverageFrom: ['src/**/*.{js,ts}'],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'html', 'lcov'],
