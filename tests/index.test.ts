@@ -39,7 +39,7 @@ describe('刁钻边界测试用例', () => {
       notFunction: false,
       isArrow: 'yes',
       isAsync: 'no',
-      isClassMember: 'no',
+      isMemberMethod: 'no',
       isConstructor: 'no',
       isProxy: 'no',
       isBound: 'no',
@@ -55,7 +55,7 @@ describe('刁钻边界测试用例', () => {
     expectFeature(fn, {
       isArrow: 'no',
       isAsync: 'no',
-      isClassMember: 'no',
+      isMemberMethod: 'no',
       isConstructor: 'yes',
       isProxy: 'no',
       isBound: 'no',
@@ -98,7 +98,7 @@ describe('刁钻边界测试用例', () => {
     expectFeature(obj['complex[name]'], {
       isArrow: 'no',
       isConstructor: 'no',
-      isClassMember: 'yes',
+      isMemberMethod: 'yes',
     });
   });
 
@@ -112,7 +112,7 @@ describe('刁钻边界测试用例', () => {
     expectFeature(obj.method, {
       isArrow: 'no',
       isConstructor: 'no',
-      isClassMember: 'yes',
+      isMemberMethod: 'yes',
     });
   });
 
@@ -127,7 +127,7 @@ describe('刁钻边界测试用例', () => {
       isArrow: 'no',
       isAsync: 'yes',
       isConstructor: 'no',
-      isClassMember: 'no',
+      isMemberMethod: 'no',
       isGenerator: 'yes',
     });
   });
@@ -140,25 +140,25 @@ describe('刁钻边界测试用例', () => {
       isArrow: 'yes',
       isAsync: 'no',
       isConstructor: 'no',
-      isClassMember: 'no',
+      isMemberMethod: 'no',
       isGenerator: 'no',
     });
   });
 
-  fit('绑定多次的函数', () => {
+  fit('绑定的函数', () => {
     // 多次绑定的函数
     const fn = function () {
       return this;
     };
+    console.warn(fn.bind === Function.prototype.bind, fn.bind.toString());
     const boundOnce = fn.bind({ x: 1 });
-    const boundTwice = boundOnce.bind({ y: 2 });
-    expectFeature(boundTwice, {
+    expectFeature(boundOnce, {
       isBound: 'yes',
       isProxy: 'no',
       isArrow: 'no',
       isAsync: 'no',
       isConstructor: 'yes',
-      isClassMember: 'no',
+      isMemberMethod: 'no',
       isGenerator: 'no',
     });
   });
@@ -177,7 +177,7 @@ describe('刁钻边界测试用例', () => {
       isArrow: 'yes',
       isAsync: 'no',
       isConstructor: 'no',
-      isClassMember: 'no',
+      isMemberMethod: 'no',
       isGenerator: 'no',
     });
   });

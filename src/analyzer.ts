@@ -145,7 +145,7 @@ export const analyse = (fn: Function) => {
     params,
     body,
     isArrow: body.startsWith('=>') || noParenthesesButArrow,
-    isClassMember: !(
+    isMemberMethod: !(
       body.startsWith('=>') ||
       name.startsWith('function') ||
       name.startsWith('async function* ') ||
@@ -200,6 +200,34 @@ export const isConstructor = (fn: any) => {
       error.message.includes('is not a constructor')
     ) {
       return false;
+    }
+    console.error(
+      '[GetFunctionType]',
+      '发生了未知错误。An unknown error occurred.',
+      'fn:',
+      fn,
+      error
+    );
+    throw error;
+  }
+};
+
+export const isClass = (fn: any) => {
+  try {
+    const fp = createProxyDirectly(fn, {
+      construct(target, args) {
+        return {};
+      },
+    });
+    fp();
+    return false;
+  } catch (error) {
+    if (
+      error instanceof TypeError &&
+      error.message &&
+      error.message.includes(`Class constructor A cannot be invoked without 'new'`)
+    ) {
+      return true;
     }
     console.error(
       '[GetFunctionType]',

@@ -2,7 +2,7 @@
 let injectionFlag = false;
 
 const proxiedFns = new WeakSet<Function>();
-const boundFns = new WeakSet<Function>();
+const boundFns = new Set<Function>();
 const sourceMap = new WeakMap<Function, Function>();
 
 const setSource = (target: Function, newFn: Function) => {
@@ -49,7 +49,6 @@ const inject = () => {
   const oldBind = Function.prototype.bind;
   // 改写
   Function.prototype.bind = function (this, thisArg: any, ...args: any[]) {
-    console.log('Bind called on:', this.name || '(anonymous function)');
     const newFn = oldBind.call(this, thisArg, ...args);
     setSource(this, newFn);
     boundFns.add(newFn);
@@ -83,7 +82,7 @@ export const { createProxyDirectly, bindDirectly } = inject();
 export const isInProxySet = (o: any) => proxiedFns.has(o);
 
 export const isInBoundSet = (o: any) => (
-  console.log(o, boundFns.has(o)), boundFns.has(o)
+  console.log(o, boundFns.has(o), boundFns.size, sourceMap.has(o)), boundFns.has(o)
 );
 
 export const getSourceFunction = (o: Function) => sourceMap.get(o) ?? o;

@@ -4,7 +4,7 @@ export const nativeCode = (functionName?: string) =>
   `function ${functionName ?? ''}() { [native code] }`;
 
 export const isNode = () => {
-  return typeof process?.versions?.node !== 'undefined';
+  return process?.versions?.node !== undefined;
 };
 
 export const justify = (str: string) => {
