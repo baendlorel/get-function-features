@@ -1,4 +1,4 @@
-# Get-function-type
+# get-function-features
 
 JS/TS functions have many features, this package will show every feature it can detect.
 
@@ -7,24 +7,23 @@ Can be used both on javascript and typescript projects.
 ## Requirement
 
 Your environment must support Proxy. \
-Import this package first (at least before your own modules) for better accuracy.
-[Why?](#tracking-proxy-and-bind)
+Import this package first (at least before your own modules) for better accuracy. [Learn why](#tracking-proxy-and-bind)
 
 ## Usage
 
 ### import
 
 ```typescript
-import getFunctionType from 'get-function-type';
+import getFunctionFeatures from 'get-function-features';
 // or
-const getFunctionType = require('get-function-type');
+const getFunctionFeatures = require('get-function-features');
 ```
 
 ### Use
 
 ```typescript
 const fn = function () {};
-const result = getFunctionType(fn);
+const result = getFunctionFeatures(fn);
 ```
 
 ## Return value
@@ -50,13 +49,13 @@ const result = {
 
 ## How it works
 
-Assume we are checking the features of a target function `fn`. There are 3 main approaches blow.
+Assume we are checking the features of a target function `fn`. There are 3 main approaches below.
 
 ### Phantom Call
 
 _无副作用试调_
 
-By using `Proxy` to intercept the calling of `fn`, we can prevent it to be actually executed. Since `Proxy` will keep the original features of `fn`, we can try to call it with out any side effect.
+By using `Proxy` to intercept the calling of `fn`, we can prevent it to be actually executed. Since `Proxy` will keep the original features of `fn`, we can try to call it without any side effect.
 
 - if `fn` cannot be called, the proxied function(intercept `apply`) will also be unable to be called. Through this, we can know that `fn` is a class.
 - if `fn` cannot be newed, the proxied function(intercept `construct`) will also be unable to be newed. We can tell `fn` is not a class or a constructor.
@@ -65,10 +64,10 @@ By using `Proxy` to intercept the calling of `fn`, we can prevent it to be actua
 
 _跟踪代理与绑定_
 
-There is almost no way to check if a function is bound or proxied. When a function is bound or Proxied, the `toString` method whill only return `function () { [native code] }`. It loses all features in definition such as functionName, async flag, arrow, etc. Only Browsers and Nodejs themselves know it and will show some words like 'Proxy(fn)' when using `console.log`. In Nodejs, we have `util.types.isProxy`, but it is not available in Browsers. Name of a bound function will start with 'bound' and be like `bound fn`, but it is not a standard behavior.
+There is almost no way to check if a function is bound or proxied. When a function is bound or Proxied, the `toString` method will only return `function () { [native code] }`. It loses all features in definition such as functionName, async flag, arrow, etc. Only Browsers and Nodejs themselves know it and will show some words like 'Proxy(fn)' when using `console.log`. In Nodejs, we have `util.types.isProxy`, but it is not available in Browsers. Name of a bound function will start with 'bound' and be like `bound fn`, but it is not a standard behavior.
 
-Thanks for the flexibility of Javascript/Typescript, we can rewrite `Proxy` and `Function.prototype.bind` to record these operations.
-**So it is why we recommend you to import this package at an early position**. You can use these two methods as usual, for they will give you the original result. But they will record the source function and Proxied/Bound history. And the history is save in a WeakMap that stores 'function -> PBState' pair.
+Thanks to the flexibility of Javascript/Typescript, we can rewrite `Proxy` and `Function.prototype.bind` to record these operations.
+**So it is why we recommend you to import this package at an early position**. You can use these two methods as usual, for they will give you the original result. But they will record the source function and Proxied/Bound history. And the history is saved in a `WeakMap<Function, PBState>`.
 
 ```typescript
 // PBStates look like this:
@@ -78,7 +77,7 @@ const WAS_PROXIED = 0b0100;
 const WAS_BOUND = 0b1000;
 ```
 
-And the `PBState` is a calculated by these flags using logical operators.
+And the `PBState` is calculated by these flags using logical operators.
 
 The override of these 2 methods brings us accurate information of `fn`.
 
