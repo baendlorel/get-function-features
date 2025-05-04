@@ -3,7 +3,7 @@
  * @author Kasukabe Tsumugi <futami16237@gmail.com>
  * @license MIT
  */
-import { FeatureLogic, analyser, tracker, FunctionFeatureResult } from '@/core';
+import { FeatureLogic, Analyser, tracker, FunctionFeatureResult } from '@/core';
 import { err, errLog } from '@/misc';
 
 const getFunctionFeatures = (fn: any) => {
@@ -12,17 +12,16 @@ const getFunctionFeatures = (fn: any) => {
   }
 
   const sc = tracker.getSource(fn);
-  const parsed = analyser(sc);
+  const analyser = new Analyser(sc);
+
   const features: FunctionFeatureResult = {
     target: fn,
     source: sc,
 
     // 这两个用fn和sc都可以
-    isConstructor: analyser.isConstructor(sc),
-    isClass: analyser.isClass(sc),
-    get isClassic() {
-      return features.isConstructor && !features.isClass;
-    },
+    isConstructor: analyser.isConstructor,
+    isClass: analyser.isClass,
+    isClassic: analyser.isConstructor && !analyser.isClass,
 
     // 这四个要用fn直接判定才行
     isProxy: tracker.isProxy(fn),
@@ -31,10 +30,10 @@ const getFunctionFeatures = (fn: any) => {
     wasBound: tracker.wasBound(fn),
 
     // 下面四个必须要对sc分析才能得知
-    isArrow: parsed.isArrow,
-    isAsync: analyser.isAsync(sc),
-    isMemberMethod: parsed.isMemberMethod,
-    isGenerator: analyser.isGenerator(sc),
+    isArrow: analyser.isArrow,
+    isAsync: analyser.isAsync,
+    isMemberMethod: analyser.isMemberMethod,
+    isGenerator: analyser.isGenerator,
   };
 
   // # 逻辑闭环校验
