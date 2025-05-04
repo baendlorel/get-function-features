@@ -53,11 +53,13 @@ const getFunctionFeatures = (fn: any) => {
   logic.implies({ isClass: true }, { isConstructor: true });
 
   if (logic.errors.length > 0) {
-    const msg =
-      'Logic errors detected: ' + logic.errors.join('\n') + '. ' + fn.toString();
-
-    // const write = require('node:fs').writeFileSync;
-    // write('./logic-errors.log', msg);
+    const omit = (str: string) => (str.length > 100 ? str.slice(0, 100) + '...' : str);
+    const msg = `Logic errors detected:\n
+    - ${logic.errors.join('\n-')}
+    functionName: [${fn.name}]
+    head  : ${omit(analyser.head)}
+    params: ${omit(analyser.params)}
+    body  : ${omit(analyser.body)}`;
     throw err(msg);
   }
 

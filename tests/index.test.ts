@@ -1,6 +1,6 @@
-import { expect, jest } from '@jest/globals';
+import { expect } from '@jest/globals';
 import { describe, it, fit, env } from './injected-jest';
-import { FunctionFeature } from '@/core';
+import { extractToStringProto, FunctionFeature } from '@/core';
 
 describe('刁钻边界测试用例', () => {
   const getFunctionFeatures =
@@ -19,7 +19,7 @@ describe('刁钻边界测试用例', () => {
           Function.prototype.toString = function () {
             return '被修改了';
           };
-          expect(() => misc.extractToStringProto()).toThrowError();
+          expect(() => extractToStringProto()).toThrowError();
         } finally {
           // 恢复原状
           Function.prototype.toString = originalToString;

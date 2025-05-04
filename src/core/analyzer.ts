@@ -1,5 +1,5 @@
 import { tracker } from './tracker';
-import { err, isNode, justify, toStringProto } from '@/misc';
+import { err, isNode, justify, nativeCode } from '@/misc';
 
 const scanForNext = (str: string, char: string) => {
   for (let i = 0; i < str.length; i++) {
@@ -18,6 +18,51 @@ const scanForNext = (str: string, char: string) => {
 const matchTag = (fn: Function, tag: 'AsyncFunction' | 'GeneratorFunction') => {
   return fn.constructor.name === tag || (fn as any)[Symbol.toStringTag] === tag;
 };
+
+export const extractToStringProto = () => {
+  const _toString = Function.prototype.toString;
+
+  if (typeof _toString !== 'function') {
+    throw err(
+      'Function.prototype.toString is not a function. It is definitly been tampered!'
+    );
+  }
+
+  if (typeof _toString.call !== 'function') {
+    throw err(
+      'Function.prototype.toString.call is not a function. It is definitly been tampered!'
+    );
+  }
+
+  const toStringStr = _toString.call(_toString);
+
+  if (typeof toStringStr !== 'string') {
+    throw err(
+      'Function.prototype.toString.toString() is not a string. It is definitly been tampered!'
+    );
+  }
+
+  if (
+    toStringStr !== nativeCode('toString') &&
+    toStringStr.indexOf('native code') === -1
+  ) {
+    throw err(
+      'Function.prototype.toString.toString() is not native code. It is definitly been tampered!'
+    );
+  }
+
+  const map = new WeakMap<Function, string>();
+  return (fn: Function) => {
+    let s = map.get(fn);
+    if (s === undefined) {
+      s = justify(_toString.call(fn));
+      map.set(fn, s);
+    }
+    return s;
+  };
+};
+
+const fnToString = extractToStringProto();
 
 /**
  * 如果toString一个函数，默认值用到了单、双、反这三种引号的组合。那么会出现：\
@@ -49,7 +94,7 @@ export class Analyser {
 
   constructor(fn: Function) {
     this.target = fn;
-    const fnStr = toStringProto(fn);
+    const fnStr = fnToString(fn);
     let leftParenthesesIndex = -1;
     let rightParenthesesIndex = -1;
     let bracketLevel = 0;
@@ -201,6 +246,7 @@ export class Analyser {
     }
   }
 
+  // TODO 所有getter加上缓存装饰器避免反复计算
   get isClass() {
     try {
       const fp = tracker.createProxyDirectly(this.target, {
@@ -208,16 +254,30 @@ export class Analyser {
           return {};
         },
       });
+      // TODO 参透此处没有正确判定是class的问题
+      if (this.target.name === 'Document') {
+        process.stdout.write('运行了');
+      }
       fp();
       return false;
     } catch (error) {
       if (
         error instanceof TypeError &&
         error.message &&
-        error.message.includes(`Class constructor A cannot be invoked without 'new'`)
+        error.message.includes(`cannot be invoked without 'new'`)
       ) {
         return true;
       }
+      if (this.target.name === 'Document') {
+        process.stdout.write((error as any).message);
+      }
+
+      // 有的class可能不能以new调用，确实存在这样的情况
+      // 函数定义以class开头，说明是class
+      if (this.head.match(/^class\b/)) {
+        return true;
+      }
+
       console.error(
         '[GetFunctionType]',
         'An unknown runtime error occurred.',
@@ -227,10 +287,6 @@ export class Analyser {
       );
       throw error;
     }
-  }
-
-  get isArrow2() {
-    return this.body.startsWith('=>');
   }
 
   get isAsync() {
@@ -247,11 +303,13 @@ export class Analyser {
   }
 
   get isMemberMethod() {
-    return !(
-      this.body.startsWith('=>') ||
-      this.head.startsWith('function ') ||
-      this.head.startsWith('async function* ') ||
-      this.head.startsWith('async function ')
+    return (
+      !(
+        this.body.startsWith('=>') ||
+        this.head.match(/^function\b/) ||
+        this.head.match(/^async function\b/) ||
+        this.head.match(/^async function\*\b/)
+      ) && !this.isClass
     );
   }
 
