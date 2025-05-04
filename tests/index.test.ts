@@ -1,7 +1,6 @@
-import { expect } from '@jest/globals';
+import { expect, jest } from '@jest/globals';
 import { describe, it, fit, env } from './injected-jest';
 import { FunctionFeature } from '@/core';
-// import getFunctionFeatures from '@/index';
 
 describe('刁钻边界测试用例', () => {
   const getFunctionFeatures =

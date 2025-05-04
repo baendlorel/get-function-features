@@ -54,8 +54,12 @@ const getFunctionFeatures = (fn: any) => {
   logic.implies({ isClass: true }, { isConstructor: true });
 
   if (logic.errors.length > 0) {
-    errLog('Logic errors:\n', logic.errors.join('\n'));
-    throw err('Logic errors detected');
+    const msg =
+      'Logic errors detected: ' + logic.errors.join('\n') + '. ' + fn.toString();
+
+    // const write = require('node:fs').writeFileSync;
+    // write('./logic-errors.log', msg);
+    throw err(msg);
   }
 
   return features;

@@ -91,6 +91,12 @@ First, we find the source function `sourceFn` of `fn`. Then, by stringifying `so
 
 It is obvious that async functions start with `async`,arrow functions shall have `=>` at the beginning of their body and generator functions have `*` before their names. Other features can also be detected in the same way.
 
+## Purpose
+
+It might frustrated that there are few practical usages of this package and was designed for theoretical investigation and fun.
+
+A fact not widely known is that almost all functions of `document` is classic. And a mock function created by `jest.fn()` is also classic, not arrowed. There is no arrow function in browser APIs and NodeJS modules.
+
 ## LICENSE
 
 MIT

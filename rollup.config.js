@@ -30,7 +30,6 @@ export default [
     ],
     external: [], // 可以加入 'fs'、'path' 等 Node 内建模块
   },
-
   // 类型声明打包
   {
     input: 'src/index.ts', // 直接从源码生成类型声明

@@ -1,3 +1,4 @@
+/** @type {import('jest').Config} */
 export default {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',

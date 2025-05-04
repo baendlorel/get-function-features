@@ -49,7 +49,7 @@ export class FeatureLogic {
     const f1 = this.features[a];
     const f2 = this.features[b];
     if (f1 === f2) {
-      this.errors.push(`'${a}' and '${b}' cannot be both 'yes' or 'no'`);
+      this.errors.push(`'${a}' and '${b}' cannot be the same`);
     }
   }
 
@@ -62,7 +62,7 @@ export class FeatureLogic {
     const f1 = this.features[a];
     const f2 = this.features[b];
     if (f1 === f2 && f1) {
-      this.errors.push(`'${a as string}' and '${b as string}' cannot be both 'yes'`);
+      this.errors.push(`'${a as string}' and '${b as string}' cannot be both true`);
     }
   }
 }

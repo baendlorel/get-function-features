@@ -15,6 +15,7 @@ const scanForNext = (str: string, char: string) => {
   return -1;
 };
 
+// TODO 改成一个class
 interface Analyser {
   (fn: Function): {
     symbolName: string | undefined;
