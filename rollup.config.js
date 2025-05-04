@@ -5,11 +5,6 @@ import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import alias from '@rollup/plugin-alias';
 
-// 定义路径别名配置
-const aliasOptions = {
-  entries: [{ find: /^@/, replacement: path.resolve(import.meta.dirname, 'src') }],
-};
-
 export default [
   // 主打包配置
   {
@@ -22,7 +17,9 @@ export default [
       },
     ],
     plugins: [
-      alias(aliasOptions), // 添加路径别名解析
+      alias({
+        entries: [{ find: /^@/, replacement: path.resolve(import.meta.dirname, 'src') }],
+      }), // 添加路径别名解析
       resolve(),
       commonjs(),
       typescript({
@@ -39,7 +36,9 @@ export default [
     input: 'src/index.ts', // 直接从源码生成类型声明
     output: [{ file: 'dist/index.d.ts', format: 'es' }],
     plugins: [
-      alias(aliasOptions), // 确保类型声明中的别名也被正确处理
+      alias({
+        entries: [{ find: /^@/, replacement: path.resolve(import.meta.dirname, 'src') }],
+      }), // 确保类型声明中的别名也被正确处理
       dts(),
     ],
   },
