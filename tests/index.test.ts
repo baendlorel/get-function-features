@@ -1,28 +1,37 @@
 import { expect } from '@jest/globals';
-import { describe, it, fit } from './injected-jest';
-import { FunctionFeature } from '../src/core';
-import { extractToStringProto } from '../src/misc';
-import getFunctionFeatures from '../src/index';
+import { describe, it, fit, env } from './injected-jest';
+import { FunctionFeature } from '@/core';
+// import getFunctionFeatures from '@/index';
 
 describe('刁钻边界测试用例', () => {
-  const expectFeature = (fn: Function, expected: Partial<FunctionFeature>) =>
-    expect(getFunctionFeatures(fn)).toMatchObject(expected);
+  const getFunctionFeatures =
+    env === 'dev'
+      ? (require('@/index') as typeof import('@/index')).default
+      : (require('../dist/index') as typeof import('../dist/index')).default;
 
   describe('篡改', () => {
-    it('Function.prototype.toString 被篡改的情况', () => {
-      const originalToString = Function.prototype.toString;
-      try {
-        // 修改 Function.prototype.toString
-        Function.prototype.toString = function () {
-          return '被修改了';
-        };
-        expect(() => extractToStringProto()).toThrowError();
-      } finally {
-        // 恢复原状
-        Function.prototype.toString = originalToString;
-      }
-    });
+    it(
+      'Function.prototype.toString 被篡改的情况',
+      () => {
+        const misc = require('@/misc') as typeof import('@/misc');
+        const originalToString = Function.prototype.toString;
+        try {
+          // 修改 Function.prototype.toString
+          Function.prototype.toString = function () {
+            return '被修改了';
+          };
+          expect(() => misc.extractToStringProto()).toThrowError();
+        } finally {
+          // 恢复原状
+          Function.prototype.toString = originalToString;
+        }
+      },
+      'dev'
+    );
   });
+
+  const expectFeature = (fn: Function, expected: Partial<FunctionFeature>) =>
+    expect(getFunctionFeatures(fn)).toMatchObject(expected);
 
   describe('通常的函数情形', () => {
     it('不是函数，应该报错', () => {
@@ -97,7 +106,7 @@ describe('刁钻边界测试用例', () => {
     it('具有复杂方括号符号的函数', () => {
       // 具有复杂方括号符号名称的方法
       const obj = {
-        ['complex[name]'](a, b) {
+        ['complex[name]'](a: any, b: any) {
           return a + b;
         },
       };
@@ -207,7 +216,7 @@ describe('刁钻边界测试用例', () => {
     it('绑定的函数', () => {
       // 多次绑定的函数
       const fn = function () {
-        return this;
+        return 1;
       };
       const boundOnce = fn.bind({ x: 1 });
       expectFeature(boundOnce, {
@@ -226,7 +235,7 @@ describe('刁钻边界测试用例', () => {
       const originalFn = () => {};
       const proxiedFn = new Proxy(originalFn, {
         apply(target, thisArg, args) {
-          return target.apply(thisArg, args);
+          return 1;
         },
       });
       expectFeature(proxiedFn, {
@@ -246,7 +255,7 @@ describe('刁钻边界测试用例', () => {
       const bound = originalFn.bind({});
       const proxiedFn = new Proxy(bound, {
         apply(target, thisArg, args) {
-          return target.apply(thisArg, args);
+          return 1;
         },
       });
       expectFeature(proxiedFn, {
@@ -262,7 +271,7 @@ describe('刁钻边界测试用例', () => {
       const originalFn = function () {};
       const boundFn = originalFn.bind({});
       const revocable = Proxy.revocable(originalFn, {
-        apply(target, thisArg, args) {
+        apply(target, thisArg, args: any) {
           return target.apply(thisArg, args);
         },
       });
@@ -278,7 +287,7 @@ describe('刁钻边界测试用例', () => {
       const originalFn = function () {};
       const proxiedFn = new Proxy(originalFn.bind({}), {
         apply(target, thisArg, args) {
-          return target.apply(thisArg, args);
+          return 1;
         },
       });
       const boundFn = proxiedFn.bind({});
@@ -291,9 +300,3 @@ describe('刁钻边界测试用例', () => {
     });
   });
 });
-
-// describe('nothing', () => {
-//   it('nothing', () => {
-//     expect(1).toBe(1);
-//   });
-// });

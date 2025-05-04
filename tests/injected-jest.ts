@@ -6,6 +6,8 @@ type TestFn = Parameters<typeof itJest>[1];
 type BlockNameLike = Parameters<typeof describeJest>[0];
 type BlockFn = Parameters<typeof describeJest>[1];
 
+type Env = 'dev' | 'prod' | 'both';
+
 const createJest = () => {
   let _level = 0;
   let _currentCounter = 0;
@@ -14,7 +16,15 @@ const createJest = () => {
 
   const _p = (n: number) => `${String(n).padStart(3, ' ')}`;
 
-  const describe = (blockName: BlockNameLike, blockFn: BlockFn) => {
+  const _env: Env = process.env.NODE_ENV === 'production' ? 'prod' : 'dev';
+
+  console.log('Using ENV =', _env);
+
+  const describe = (blockName: BlockNameLike, blockFn: BlockFn, env: Env = 'both') => {
+    if (env !== 'both' && env !== _env) {
+      return;
+    }
+
     _level++;
     if (_level < _index.length) {
       _index.splice(_level);
@@ -26,13 +36,35 @@ const createJest = () => {
     _level--;
   };
 
-  const it = (testName: TestNameLike, fn: TestFn, timeout?: number) => {
+  const it = (
+    testName: TestNameLike,
+    fn: TestFn,
+    timeoutOrEnv?: number | Env,
+    timeout?: number
+  ) => {
+    timeout = typeof timeoutOrEnv === 'number' ? timeoutOrEnv : timeout;
+    const env = typeof timeoutOrEnv === 'string' ? timeoutOrEnv : 'both';
+    if (env !== 'both' && env !== _env) {
+      return;
+    }
+
     _currentCounter++;
     _globalCounter++;
     itJest(`${_p(_currentCounter)}. ${testName} (G-${_globalCounter})`, fn, timeout);
   };
 
-  const fit = (testName: TestNameLike, fn: TestFn, timeout?: number) => {
+  const fit = (
+    testName: TestNameLike,
+    fn: TestFn,
+    timeoutOrEnv?: number | Env,
+    timeout?: number
+  ) => {
+    timeout = typeof timeoutOrEnv === 'number' ? timeoutOrEnv : timeout;
+    const env = typeof timeoutOrEnv === 'string' ? timeoutOrEnv : 'both';
+    if (env !== 'both' && env !== _env) {
+      return;
+    }
+
     _currentCounter++;
     _globalCounter++;
     fitJest(`${_p(_currentCounter)}. ${testName} (G-${_globalCounter})`, fn, timeout);
@@ -42,7 +74,8 @@ const createJest = () => {
     describe,
     it,
     fit,
+    env: _env,
   };
 };
 
-export const { describe, it, fit } = createJest();
+export const { describe, it, fit, env } = createJest();

@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "declaration": true,
-    "module": "commonjs", // 必须为 commonjs
+    "module": "CommonJS",
     "target": "es6",
     "outDir": "dist",
     "esModuleInterop": true, // 可选，增强兼容性
@@ -11,6 +11,5 @@
       "@/*": ["src/*"]
     }
   },
-  "include": ["src/*.ts", "src/misc/index.ts", "src/misc/logs.ts"],
-  "exclude": ["tests"]
+  "include": ["src/**/*.ts", "tests/**/*.test.ts"]
 }
