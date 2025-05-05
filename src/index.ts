@@ -4,7 +4,7 @@
  * @license MIT
  */
 import { FeatureLogic, Analyser, tracker, FunctionFeatureResult } from '@/core';
-import { err, errLog } from '@/misc';
+import { err, errLog, logFn } from '@/misc';
 
 const getFunctionFeatures = (fn: any) => {
   if (typeof fn !== 'function') {
@@ -53,13 +53,8 @@ const getFunctionFeatures = (fn: any) => {
   logic.implies({ isClass: true }, { isConstructor: true });
 
   if (logic.errors.length > 0) {
-    const omit = (str: string) => (str.length > 100 ? str.slice(0, 100) + '...' : str);
     const msg = `Logic errors detected:\n
-    - ${logic.errors.join('\n-')}
-    functionName: [${fn.name}]
-    head  : ${omit(analyser.head)}
-    params: ${omit(analyser.params)}
-    body  : ${omit(analyser.body)}`;
+    - ${logic.errors.join('\n-')}\n${logFn(sc)}`;
     throw err(msg);
   }
 

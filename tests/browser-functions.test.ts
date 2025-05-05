@@ -5,6 +5,7 @@ import getFunctionFeatures from '@/index';
 import { expect, jest } from '@jest/globals';
 import { describe, it } from './injected-jest';
 import getAllFunctionNames from './get-all-function-names';
+import { logFn } from '@/misc';
 
 describe('浏览器函数的结论', () => {
   const gff = getFunctionFeatures;
@@ -15,15 +16,22 @@ describe('浏览器函数的结论', () => {
     });
   });
 
-  for (const k of getAllFunctionNames(window.document)) {
+  const propKeys = getAllFunctionNames(window.document);
+  for (const k of propKeys) {
     const v = Reflect.get(window.document, k);
     if (typeof v === 'function') {
       const feats = getFunctionFeatures(v);
-      process.stdout.write(
-        `document.${String(k)} : ${feats.isClassic ? '传统' : ''} ${
-          feats.isMemberMethod ? '成员' : ''
-        }\n`
-      );
+      let t = '';
+      if (feats.isClassic) {
+        t += '传统 ';
+      }
+      if (feats.isMemberMethod) {
+        t += '成员';
+      }
+      if (!feats.isClassic && !feats.isMemberMethod) {
+        console.log(`不符合预期的函数 ${logFn(v)}`, feats);
+      }
+      process.stdout.write(`document.${String(k)} : ${t}\n`);
     }
   }
 });

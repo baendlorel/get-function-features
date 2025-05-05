@@ -19,7 +19,7 @@ const matchTag = (fn: Function, tag: 'AsyncFunction' | 'GeneratorFunction') => {
   return fn.constructor.name === tag || (fn as any)[Symbol.toStringTag] === tag;
 };
 
-export const extractToStringProto = () => {
+const extractToStringProto = () => {
   const _toString = Function.prototype.toString;
 
   if (typeof _toString !== 'function') {
@@ -65,11 +65,40 @@ export const extractToStringProto = () => {
 const fnToString = extractToStringProto();
 
 /**
+ * 缓存装饰器，用于缓存getter的计算结果
+ * @returns PropertyDescriptor
+ */
+const Cached = (
+  _target: any,
+  propertyKey: string,
+  descriptor: PropertyDescriptor
+): void => {
+  const originalGetter = descriptor.get;
+
+  if (!originalGetter) {
+    throw new Error(`@cached decorator can only be applied to getters`);
+  }
+
+  // 使用WeakMap避免内存泄漏
+  let result = undefined as boolean | undefined;
+
+  // 替换原始getter
+  descriptor.get = function (this: any) {
+    if (result === undefined) {
+      result = originalGetter.call(this);
+    } else {
+      console.log('直接来!', propertyKey, result);
+    }
+    return result;
+  };
+};
+
+/**
  * 如果toString一个函数，默认值用到了单、双、反这三种引号的组合。那么会出现：\
- * 1、使用了单引号，那么结果会用双引号包裹 \
- * 2、双引号或反引号,会用单引号包裹 \
- * 3、如果使用了两种引号，那么会用第三种没用过的引号包裹 \
- * 4、如果三种都用，那么会用单引号包裹，并将单引号转义 \
+ * 1.使用了单引号，那么结果会用双引号包裹 \
+ * 2.双引号或反引号，会用单引号包裹 \
+ * 3.如果使用了两种引号，那么会用第三种没用过的引号包裹 \
+ * 4.如果三种都用，那么会用单引号包裹，并将单引号转义 \
  * ✅ 令人惊喜的是这个函数写了一遍就通过了，没有错误
  *
  * When using toString() on a function that has default parameters using a combination of single quotes, double quotes, and backticks:
@@ -248,45 +277,9 @@ export class Analyser {
 
   // TODO 所有getter加上缓存装饰器避免反复计算
   get isClass() {
-    try {
-      const fp = tracker.createProxyDirectly(this.target, {
-        apply(target, args) {
-          return {};
-        },
-      });
-      // TODO 参透此处没有正确判定是class的问题
-      if (this.target.name === 'Document') {
-        process.stdout.write('运行了');
-      }
-      fp();
-      return false;
-    } catch (error) {
-      if (
-        error instanceof TypeError &&
-        error.message &&
-        error.message.includes(`cannot be invoked without 'new'`)
-      ) {
-        return true;
-      }
-      if (this.target.name === 'Document') {
-        process.stdout.write((error as any).message);
-      }
-
-      // 有的class可能不能以new调用，确实存在这样的情况
-      // 函数定义以class开头，说明是class
-      if (this.head.match(/^class\b/)) {
-        return true;
-      }
-
-      console.error(
-        '[GetFunctionType]',
-        'An unknown runtime error occurred.',
-        'fn:',
-        this.target,
-        error
-      );
-      throw error;
-    }
+    // 有的class可能不能以new调用，确实存在这样的情况
+    // 函数定义以class开头，说明是class
+    return this.head.match(/^class\b/) !== null;
   }
 
   get isAsync() {
@@ -313,6 +306,7 @@ export class Analyser {
     );
   }
 
+  @Cached
   get isGenerator() {
     if (isNode) {
       const util = require('node:util') as typeof import('util');

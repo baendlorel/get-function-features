@@ -57,8 +57,9 @@ _无副作用试调_
 
 By using `Proxy` to intercept the calling of `fn`, we can prevent it to be actually executed. Since `Proxy` will keep the original features of `fn`, we can try to call it without any side effect.
 
-- if `fn` cannot be called, the proxied function(intercept `apply`) will also be unable to be called. Through this, we can know that `fn` is a class.
 - if `fn` cannot be newed, the proxied function(intercept `construct`) will also be unable to be newed. We can tell `fn` is not a class or a constructor.
+
+- However, if `fn` is a class, proxying its `apply` method will actually change its behavior. The class that once could not be called like `fn()` will become callable now. It seems that Proxy skips the `TypeError` when calling it directly.
 
 ### Tracking Proxy and Bind
 

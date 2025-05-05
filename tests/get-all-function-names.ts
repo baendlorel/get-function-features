@@ -22,6 +22,7 @@ function getAllFunctionNames(
   let currentObj = obj;
 
   // 遍历整个原型链
+  const unaccessibleProps = [] as string[];
   while (currentObj !== null && currentObj !== undefined) {
     // 获取当前对象的所有属性名
     let propertyNames: (string | symbol)[] = [];
@@ -54,13 +55,12 @@ function getAllFunctionNames(
     // 过滤出函数类型的属性并添加到结果集
     for (const name of propertyNames) {
       try {
-        const prop = currentObj[name];
+        const prop = Reflect.get(currentObj, name);
         if (typeof prop === 'function') {
           result.add(String(name));
         }
       } catch (e) {
-        // 某些属性可能不允许访问，忽略错误
-        console.warn(`无法访问属性 ${String(name)}:`, e);
+        unaccessibleProps.push(String(name));
       }
     }
 
@@ -72,6 +72,9 @@ function getAllFunctionNames(
       break;
     }
   }
+  // 某些属性可能不允许访问，忽略错误
+  // console.log(`无法访问属性，跳过 ${String(unaccessibleProps.join(', '))}`);
+  console.log(`无法访问属性，跳过 ${unaccessibleProps.length}个函数`);
 
   return Array.from(result).sort();
 }

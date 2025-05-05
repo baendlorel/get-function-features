@@ -1,6 +1,6 @@
 import { expect } from '@jest/globals';
 import { describe, it, fit, env } from './injected-jest';
-import { extractToStringProto, FunctionFeature } from '@/core';
+import { FunctionFeature } from '@/core';
 
 describe('刁钻边界测试用例', () => {
   const getFunctionFeatures =
@@ -12,14 +12,41 @@ describe('刁钻边界测试用例', () => {
     it(
       'Function.prototype.toString 被篡改的情况',
       () => {
-        const misc = require('@/misc') as typeof import('@/misc');
         const originalToString = Function.prototype.toString;
         try {
           // 修改 Function.prototype.toString
           Function.prototype.toString = function () {
             return '被修改了';
           };
-          expect(() => extractToStringProto()).toThrowError();
+          expect(() => {
+            const _toString = Function.prototype.toString;
+
+            if (typeof _toString !== 'function') {
+              throw new Error(
+                'Function.prototype.toString is not a function. It is definitly been tampered!'
+              );
+            }
+
+            if (typeof _toString.call !== 'function') {
+              throw new Error(
+                'Function.prototype.toString.call is not a function. It is definitly been tampered!'
+              );
+            }
+
+            const toStringStr = _toString.call(_toString);
+
+            if (typeof toStringStr !== 'string') {
+              throw new Error(
+                'Function.prototype.toString.toString() is not a string. It is definitly been tampered!'
+              );
+            }
+
+            if (toStringStr.indexOf('native code') === -1) {
+              throw new Error(
+                'Function.prototype.toString.toString() is not native code. It is definitly been tampered!'
+              );
+            }
+          }).toThrowError();
         } finally {
           // 恢复原状
           Function.prototype.toString = originalToString;
