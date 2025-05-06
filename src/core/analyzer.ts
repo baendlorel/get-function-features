@@ -68,27 +68,16 @@ const fnToString = extractToStringProto();
  * 缓存装饰器，用于缓存getter的计算结果
  * @returns PropertyDescriptor
  */
-const Cached = (
-  _target: any,
-  propertyKey: string,
-  descriptor: PropertyDescriptor
-): void => {
-  const originalGetter = descriptor.get;
-
-  if (!originalGetter) {
-    throw new Error(`@cached decorator can only be applied to getters`);
-  }
-
-  // 使用WeakMap避免内存泄漏
-  let result = undefined as boolean | undefined;
-
-  // 替换原始getter
-  descriptor.get = function (this: any) {
-    if (result === undefined) {
-      result = originalGetter.call(this);
-    } else {
-      console.log('直接来!', propertyKey, result);
-    }
+const cached = (
+  value: (this: Analyser) => boolean,
+  context: ClassGetterDecoratorContext<Analyser, boolean>
+) => {
+  return function (this: Analyser) {
+    const result = value.call(this);
+    Object.defineProperty(this, context.name, {
+      value: result,
+      writable: false,
+    });
     return result;
   };
 };
@@ -99,6 +88,7 @@ const Cached = (
  * 2.双引号或反引号，会用单引号包裹 \
  * 3.如果使用了两种引号，那么会用第三种没用过的引号包裹 \
  * 4.如果三种都用，那么会用单引号包裹，并将单引号转义 \
+ *
  * ✅ 令人惊喜的是这个函数写了一遍就通过了，没有错误
  *
  * When using toString() on a function that has default parameters using a combination of single quotes, double quotes, and backticks:
@@ -247,6 +237,7 @@ export class Analyser {
    * @param fn
    * @returns
    */
+  @cached
   get isConstructor() {
     try {
       const fp = tracker.createProxyDirectly(this.target as any, {
@@ -275,13 +266,14 @@ export class Analyser {
     }
   }
 
-  // TODO 所有getter加上缓存装饰器避免反复计算
+  @cached
   get isClass() {
     // 有的class可能不能以new调用，确实存在这样的情况
     // 函数定义以class开头，说明是class
     return this.head.match(/^class\b/) !== null;
   }
 
+  @cached
   get isAsync() {
     if (isNode) {
       const util = require('node:util') as typeof import('util');
@@ -295,6 +287,7 @@ export class Analyser {
     );
   }
 
+  @cached
   get isMemberMethod() {
     return (
       !(
@@ -306,7 +299,7 @@ export class Analyser {
     );
   }
 
-  @Cached
+  @cached
   get isGenerator() {
     if (isNode) {
       const util = require('node:util') as typeof import('util');
