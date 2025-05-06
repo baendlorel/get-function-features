@@ -44,3 +44,8 @@
 
 //   console.log(A.length);
 // }
+{
+  const A = eval(`(class A{})`);
+  console.log(A.toString());
+  console.log(new A());
+}

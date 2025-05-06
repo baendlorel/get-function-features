@@ -51,6 +51,8 @@ const result = {
 
 Assume we are checking the features of a target function `fn`. There are 3 main approaches below.
 
+It is possible to decieve this package and get the result your need(like rewrite the `toString` method or detect some native code).
+
 ### Phantom Call
 
 _无副作用试调_
@@ -59,13 +61,13 @@ By using `Proxy` to intercept the calling of `fn`, we can prevent it to be actua
 
 - if `fn` cannot be newed, the proxied function(intercept `construct`) will also be unable to be newed. We can tell `fn` is not a class or a constructor.
 
-- However, if `fn` is a class, proxying its `apply` method will actually change its behavior. The class that once could not be called like `fn()` will become callable now. It seems that Proxy skips the `TypeError` when calling it directly.
+- However, if `fn` is a class, proxying its `apply` method will actually change its behavior. The class that once could not be called like `fn()` will become callable now. It seems that Proxy skips the `TypeError` when calling it directly. Note that the key word `extends` cannot distinguish a classic function with a class.
 
 ### Tracking Proxy and Bind
 
 _跟踪代理与绑定_
 
-There is almost no way to check if a function is bound or proxied. When a function is bound or Proxied, the `toString` method will only return `function () { [native code] }`. It loses all features in definition such as functionName, async flag, arrow, etc. Only Browsers and Nodejs themselves know it and will show some words like 'Proxy(fn)' when using `console.log`. In Nodejs, we have `util.types.isProxy`, but it is not available in Browsers. Name of a bound function will start with 'bound' and be like `bound fn`, but it is not a standard behavior.
+There is almost no way to check if a function is bound or proxied. When a function is bound or Proxied, the `toString` method will only return `function () { [native code] }`. It loses all features in definition such as function name, async flag, arrow, etc. Only browsers and NodeJS themselves know it and will show words like 'Proxy(fn)' when using `console.log`. In Nodejs, we have `util.types.isProxy`, but it is not available in browsers. Name of a bound function will start with 'bound' and be like `bound fn`, but it is not a standard behavior.
 
 Thanks to the flexibility of Javascript/Typescript, we can rewrite `Proxy` and `Function.prototype.bind` to record these operations.
 **So it is why we recommend you to import this package at an early position**. You can use these two methods as usual, for they will give you the original result. But they will record the source function and Proxied/Bound history. And the history is saved in a `WeakMap<Function, PBState>`.

@@ -1,5 +1,6 @@
 import { tracker } from './tracker';
-import { cached, immutable, err, isNode, justify, nativeCode } from '@/misc';
+import { err, isNode, justify, nativeCode } from '@/misc';
+import { cached, immutable } from '@/misc/decorators';
 
 const scanForNext = (str: string, char: string) => {
   for (let i = 0; i < str.length; i++) {

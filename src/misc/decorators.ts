@@ -25,14 +25,14 @@ export const cached = <T, R = any>(
 //   不能将类型“void”分配给类型“boolean”。
 export const immutable = <T>(value: any, context: ClassFieldDecoratorContext<T>) => {
   if (context.kind !== 'field') {
-    throw new TypeError(`@readonly decorator can only be used on fields.`);
+    throw new TypeError(`@immutable decorator can only be used on fields.`);
   }
   return function (this: T, initialValue: any) {
-    Object.defineProperty(this, context.name, {
-      value: initialValue,
-      writable: false,
-      configurable: false,
-    });
+    const d = Object.getOwnPropertyDescriptor(this, context.name);
+    if (d) {
+      d.writable = false;
+      d.configurable = false;
+    }
     return initialValue;
   };
 };
