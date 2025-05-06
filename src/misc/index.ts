@@ -1,4 +1,5 @@
 export * from './logs';
+export * from './decorators';
 
 export const nativeCode = (functionName?: string) =>
   `function ${functionName ?? ''}() { [native code] }`;

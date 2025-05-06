@@ -1,5 +1,5 @@
 import { tracker } from './tracker';
-import { err, isNode, justify, nativeCode } from '@/misc';
+import { cached, immutable, err, isNode, justify, nativeCode } from '@/misc';
 
 const scanForNext = (str: string, char: string) => {
   for (let i = 0; i < str.length; i++) {
@@ -65,24 +65,6 @@ const extractToStringProto = () => {
 const fnToString = extractToStringProto();
 
 /**
- * 缓存装饰器，用于缓存getter的计算结果
- * @returns PropertyDescriptor
- */
-const cached = (
-  value: (this: Analyser) => boolean,
-  context: ClassGetterDecoratorContext<Analyser, boolean>
-) => {
-  return function (this: Analyser) {
-    const result = value.call(this);
-    Object.defineProperty(this, context.name, {
-      value: result,
-      writable: false,
-    });
-    return result;
-  };
-};
-
-/**
  * 如果toString一个函数，默认值用到了单、双、反这三种引号的组合。那么会出现：\
  * 1.使用了单引号，那么结果会用双引号包裹 \
  * 2.双引号或反引号，会用单引号包裹 \
@@ -102,13 +84,23 @@ const cached = (
  * @returns
  */
 export class Analyser {
+  @immutable
   readonly symbolName: string | undefined;
+
+  @immutable
   readonly head: string;
+
+  @immutable
   readonly params: string;
+
+  @immutable
   readonly body: string;
+
+  @immutable
   readonly target: Function;
 
   // 可以直接计算出来的feature
+  @immutable
   readonly isArrow: boolean;
 
   constructor(fn: Function) {

@@ -37,7 +37,6 @@ const getFunctionFeatures = (fn: any) => {
   };
 
   // # 逻辑闭环校验
-
   const logic = new FeatureLogic(features);
   logic.nand('isArrow', 'isConstructor'); // 箭头函数不能new
   logic.nand('isArrow', 'isMemberMethod'); // 箭头函数不叫成员方法，而是纯粹的变量
@@ -58,7 +57,7 @@ const getFunctionFeatures = (fn: any) => {
     throw err(msg);
   }
 
-  return features;
+  return Object.freeze(features);
 };
 
 export default getFunctionFeatures;
