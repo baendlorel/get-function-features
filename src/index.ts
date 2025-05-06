@@ -4,7 +4,7 @@
  * @license MIT
  */
 import { FeatureLogic, Analyser, tracker, FunctionFeatureResult } from '@/core';
-import { err, errLog, logFn } from '@/misc';
+import { err, logFn } from '@/misc';
 
 const getFunctionFeatures = (fn: any) => {
   if (typeof fn !== 'function') {

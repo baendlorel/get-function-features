@@ -1,8 +1,9 @@
 {
   "compilerOptions": {
     "declaration": true,
-    "module": "CommonJS",
-    "target": "es6",
+    "module": "ESNext",
+    "target": "ESNext",
+    "moduleResolution": "node",
     "outDir": "dist",
     "esModuleInterop": true, // 可选，增强兼容性
     "strict": true,
@@ -11,5 +12,6 @@
       "@/*": ["src/*"]
     }
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts"]
+  "include": ["src/**/*.ts", "tests/**/*.ts"],
+  "exclude": ["tests"]
 }
