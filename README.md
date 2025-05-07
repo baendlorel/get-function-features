@@ -1,13 +1,14 @@
-# get-function-features
+# Get-Function-Features
 
-JS/TS functions have many features, this package will show every feature it can detect.
+JS/TS functions have many features, and this package will show every feature it can detect.
 
 Can be used both on javascript and typescript projects.
 
 ## Requirement
 
-Your environment must support Proxy. \
-Import this package first (at least before your own modules) for better accuracy. [Learn why](#tracking-proxy-and-bind)
+Your environment must support Proxy.
+
+Import this package first (before your own modules) for better accuracy. [Learn why](#tracking-proxy-and-bind)
 
 ## Usage
 
@@ -35,33 +36,33 @@ The return value of `getFunctionFeatures` would be like this:
 ```typescript
 const result = {
   target: fn, // the function itself
-  source: sourceFn, // if `fn` was proxied or bound, this will be the original function
+  source: sourceFn, // the function before proxied or bound
   isConstructor: true, // can be newed
-  isClass: true, // is a class
-  isProxy: true, // is wrapped by Proxy
-  isBound: false, // is bound by `otherFn.bind`
-  isArrow: false, // is an arrow function
-  isAsync: false, // is an async function
-  isMemberMethod: false, // is a method of some class instance or object
-  isGenerator: false, // is a generator function
-};
+  isClass: true, // a class, cannot be called like `fn()`
+  isProxy: true, // wrapped by Proxy
+  isBound: false, // bound by `otherFn.bind`
+  isArrow: false, // functions like `() => {}`
+  isAsync: false, // async functions
+  isMemberMethod: false, // a method of some class instance or an object
+  isGenerator: false, // generator function like `function* () {}`
+}; // This result object is freezed
 ```
 
 ## How it works
 
 Assume we are checking the features of a target function `fn`. There are 3 main approaches below.
 
-It is possible to decieve this package and get the result your need(like rewrite the `toString` method or detect some native code).
+It is possible to deceive this package and get the result you need (like rewrite the `toString` method or detect some native code).
 
 ### Phantom Call
 
 _无副作用试调_
 
-By using `Proxy` to intercept the calling of `fn`, we can prevent it to be actually executed. Since `Proxy` will keep the original features of `fn`, we can try to call it without any side effect.
+By using `Proxy` to intercept the calling of `fn`, we can prevent it to be actually executed. Since `Proxy` preserves some original features of `fn`, we can test it without triggering side effects.
 
-- if `fn` cannot be newed, the proxied function(intercept `construct`) will also be unable to be newed. We can tell `fn` is not a class or a constructor.
+- if `fn` cannot be used with the new operator, neither can its proxied version (intercepting `construct`). We can tell `fn` is not a class or a constructor.
 
-- However, if `fn` is a class, proxying its `apply` method will actually change its behavior. The class that once could not be called like `fn()` will become callable now. It seems that Proxy skips the `TypeError` when calling it directly. Note that the key word `extends` cannot distinguish a classic function with a class.
+- However, if `fn` is a class, proxying its `apply` method will actually change its behavior. The class that once could not be called like `fn()` will become callable now. It appears that `Proxy` bypasses the `TypeError` that would normally occur when calling a class directly. Note that the key word `extends` cannot distinguish a classic function with a class.
 
 ### Tracking Proxy and Bind
 
@@ -96,9 +97,9 @@ It is obvious that async functions start with `async`,arrow functions shall have
 
 ## Purpose
 
-It might frustrated that there are few practical usages of this package and was designed for theoretical investigation and fun.
+It might be frustrating that there are few practical usages of this package, as it was designed primarily for theoretical investigation and fun.
 
-A fact not widely known is that almost all functions of `document` is classic. And a mock function created by `jest.fn()` is also classic, not arrowed. There is no arrow function in browser APIs and NodeJS modules.
+A fact not widely known is that almost all functions of `document` are classic. And a mock function created by `jest.fn()` is also classic, not arrowed. There is no arrow function in browser APIs and NodeJS modules.
 
 ## LICENSE
 
