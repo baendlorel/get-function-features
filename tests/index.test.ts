@@ -6,13 +6,13 @@ describe('刁钻边界测试用例', () => {
   const getFunctionFeatures = (() => {
     switch (env) {
       case Env.dev:
-        return (require('@/index') as typeof import('@/index')).default;
+        return require('@/index');
       case Env.prod:
-        return require('../dist/index') as (fn: any) => Readonly<FunctionFeatureResult>;
+        return require('../dist/index');
       case Env.published:
-        return require('get-function-features') as typeof import('get-function-features');
+        return require('get-function-features');
     }
-  })();
+  })() as (fn: any) => Readonly<FunctionFeatureResult>;
 
   describe('篡改', () => {
     it(
