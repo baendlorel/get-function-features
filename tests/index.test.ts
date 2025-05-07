@@ -3,10 +3,17 @@ import { describe, it, fit, env } from './injected-jest';
 import { FunctionFeature } from '@/core';
 
 describe('刁钻边界测试用例', () => {
-  const getFunctionFeatures =
-    env === 'dev'
-      ? (require('@/index') as typeof import('@/index')).default
-      : (require('../dist/index') as typeof import('../dist/index')).default;
+  const getFunctionFeatures = (() => {
+    switch (env) {
+      case 'dev':
+        return (require('@/index') as typeof import('@/index')).default;
+      case 'prod':
+        return require('../dist/index') as typeof import('../dist/index');
+      case 'build':
+        console.log(`require('get-function-features')`, require('get-function-features'));
+        return require('get-function-features') as typeof import('get-function-features');
+    }
+  })();
 
   describe('篡改', () => {
     it(

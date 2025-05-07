@@ -26,6 +26,7 @@
 	"scripts": {
 		"test": "clear & jest",
 		"test:prod": "clear & NODE_ENV=production  jest",
+		"test:build": "clear & NODE_ENV=build  jest",
 		"cover": "clear & jest --coverage",
 		"raw": "node tests/raw.js",
 		"build-old": "rm -rf dist && tsc && tsc-alias && uglifyjs ./dist/index.js -c -m -o ./dist/get-function-features.min.js",
@@ -56,5 +57,8 @@
 		"tslib": "^2.8.1",
 		"uglify-js": "^3.19.3"
 	},
-	"license": "MIT"
+	"license": "MIT",
+	"dependencies": {
+		"get-function-features": "^1.0.0"
+	}
 }

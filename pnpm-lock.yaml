@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      get-function-features:
+        specifier: ^1.0.0
+        version: 1.0.0
     devDependencies:
       '@babel/cli':
         specifier: ^7.26.4
@@ -1484,6 +1488,9 @@ packages:
   get-caller-file@2.0.5:
     resolution: {integrity: sha512-DyFP3BM/3YHTQOCUL/w0OZHR0lpKeGrxotcHWcqNEdnltqFwXVfhEBQ94eIo34AfQpo0rGki4cyIiftY06h2Fg==}
     engines: {node: 6.* || 8.* || >= 10.*}
+
+  get-function-features@1.0.0:
+    resolution: {integrity: sha512-LS4TcmW3gPGGhzex70+SLfSQavV9eWmj3i+HzX38yYnJnGxqLWGt4cItU/bDpAA6jSB3EaWEznLtnaHAgTZPyg==}
 
   get-intrinsic@1.3.0:
     resolution: {integrity: sha512-9fSjSaos/fRIVIp+xSJlE6lfwhES7LNtKaCBIamHsjr2na1BiABJPo0mOjjz8GJDURarmCPGqaiVg5mfjb98CQ==}
@@ -4050,6 +4057,8 @@ snapshots:
   gensync@1.0.0-beta.2: {}
 
   get-caller-file@2.0.5: {}
+
+  get-function-features@1.0.0: {}
 
   get-intrinsic@1.3.0:
     dependencies:

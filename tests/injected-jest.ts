@@ -6,7 +6,7 @@ type TestFn = Parameters<typeof itJest>[1];
 type BlockNameLike = Parameters<typeof describeJest>[0];
 type BlockFn = Parameters<typeof describeJest>[1];
 
-type Env = 'dev' | 'prod' | 'both';
+type Env = 'dev' | 'prod' | 'build';
 
 const createJest = () => {
   let _level = 0;
@@ -16,12 +16,21 @@ const createJest = () => {
 
   const _p = (n: number) => `${String(n).padStart(3, ' ')}`;
 
-  const _env: Env = process.env.NODE_ENV === 'production' ? 'prod' : 'dev';
+  const _env: Env = (() => {
+    switch (process.env.NODE_ENV) {
+      case 'production':
+        return 'prod';
+      case 'build':
+        return 'build';
+      default:
+        return 'dev';
+    }
+  })();
 
   console.log('Using ENV =', _env);
 
-  const describe = (blockName: BlockNameLike, blockFn: BlockFn, env: Env = 'both') => {
-    if (env !== 'both' && env !== _env) {
+  const describe = (blockName: BlockNameLike, blockFn: BlockFn, env?: Env) => {
+    if (env && env !== _env) {
       return;
     }
 
