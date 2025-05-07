@@ -71,9 +71,7 @@ export default [
       alias({
         entries: [{ find: /^@/, replacement: path.resolve(import.meta.dirname, 'src') }],
       }),
-      dts({
-        respectExternal: true,
-      }),
+      dts(),
     ],
   },
 ];

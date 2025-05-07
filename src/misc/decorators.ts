@@ -19,10 +19,12 @@ export const cached = <T, R = any>(
   };
 };
 
-//装饰器函数返回类型“(initialValue: any) => void”不可分配
-// 到类型“void | ((this: Analyser, value: boolean) => boolean)”。
-// 不能将类型“(initialValue: any) => void”分配给类型“(this: Analyser, value: boolean) => boolean”。
-//   不能将类型“void”分配给类型“boolean”。
+/**
+ * 把变量改为不可变更的
+ * @param value
+ * @param context
+ * @returns
+ */
 export const immutable = <T>(value: any, context: ClassFieldDecoratorContext<T>) => {
   if (context.kind !== 'field') {
     throw new TypeError(`@immutable decorator can only be used on fields.`);
