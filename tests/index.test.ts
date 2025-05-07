@@ -1,16 +1,15 @@
 import { expect } from '@jest/globals';
-import { describe, it, fit, env } from './injected-jest';
-import { FunctionFeature } from '@/core';
+import { describe, it, fit, env, Env } from './injected-jest';
+import { FunctionFeature, FunctionFeatureResult } from '@/core';
 
 describe('刁钻边界测试用例', () => {
   const getFunctionFeatures = (() => {
     switch (env) {
-      case 'dev':
+      case Env.dev:
         return (require('@/index') as typeof import('@/index')).default;
-      case 'prod':
-        return require('../dist/index') as typeof import('../dist/index');
-      case 'build':
-        console.log(`require('get-function-features')`, require('get-function-features'));
+      case Env.prod:
+        return require('../dist/index') as (fn: any) => Readonly<FunctionFeatureResult>;
+      case Env.published:
         return require('get-function-features') as typeof import('get-function-features');
     }
   })();
@@ -59,7 +58,7 @@ describe('刁钻边界测试用例', () => {
           Function.prototype.toString = originalToString;
         }
       },
-      'dev'
+      Env.dev
     );
   });
 
