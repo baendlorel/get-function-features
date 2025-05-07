@@ -4,7 +4,7 @@
  * @license MIT
  */
 import { FeatureLogic, Analyser, tracker, FunctionFeatureResult } from '@/core';
-import { err, logFn } from '@/misc';
+import { err } from '@/misc';
 
 /**
  * 分析JavaScript函数的特性，返回全面的功能特征报告
@@ -100,8 +100,13 @@ const getFunctionFeatures = (fn: any) => {
   logic.implies({ isClass: true }, { isConstructor: true });
 
   if (logic.errors.length > 0) {
+    const omit = (str: string) => (str.length > 100 ? str.slice(0, 100) + '...' : str);
     const msg = `Logic errors detected:\n
-    - ${logic.errors.join('\n-')}\n${logFn(sc)}`;
+    - ${logic.errors.join('\n-')}
+    functionName: [${fn.name}]
+    head  : ${omit(analyser.head)}
+    params: ${omit(analyser.params)}
+    body  : ${omit(analyser.body)}`;
     throw err(msg);
   }
 

@@ -3,7 +3,6 @@
  */
 import getFunctionFeatures from '@/index';
 import { expect, jest } from '@jest/globals';
-import { logFn } from '@/misc';
 import { describe, it } from './injected-jest';
 import getAllFunctionNames from './get-all-function-names';
 
@@ -34,7 +33,7 @@ describe('浏览器函数的结论', () => {
         t.push('成员');
       }
       if (t.length === 0) {
-        console.log(`不符合预期的函数 ${logFn(v)}`, feats);
+        console.log(`不符合预期的函数 ${v.toString().slice(0, 100)}...`, feats);
       }
       messages.push(`document.${String(k)} : ${t}`);
     }

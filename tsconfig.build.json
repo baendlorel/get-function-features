@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // 继承基础配置，但可以覆盖一些选项
+    "declaration": false
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["tests/**/*"]
+}

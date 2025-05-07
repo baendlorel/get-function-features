@@ -6,6 +6,8 @@ import commonjs from '@rollup/plugin-commonjs';
 import alias from '@rollup/plugin-alias';
 import { terser } from 'rollup-plugin-terser';
 import babel from '@rollup/plugin-babel';
+
+const tsconfigFile = './tsconfig.build.json';
 /**
  * @type {import('rollup').RollupOptions}
  */
@@ -42,7 +44,7 @@ export default [
         ],
       }),
       typescript({
-        tsconfig: './tsconfig.json',
+        tsconfig: tsconfigFile,
       }),
       terser({
         format: {
@@ -71,7 +73,9 @@ export default [
       alias({
         entries: [{ find: /^@/, replacement: path.resolve(import.meta.dirname, 'src') }],
       }),
-      dts(),
+      dts({
+        tsconfig: tsconfigFile,
+      }),
     ],
   },
 ];
